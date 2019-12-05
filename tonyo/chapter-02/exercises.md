@@ -14,11 +14,11 @@ Returns the type constrained by its argument list of _type_.  It can't coerce.
 
 ```haskell
 lB1 :: [a] -> a
-lB1 :: []  = error "Not enough elements"
-lB1 :: [a] = error "Not enough elements"
-lB1 :: xs  = if lB1R_ xs 10
-             then error "Infinite-ish list, won't continue"
-             else xs !! ((length xs) - 2)
+lB1 []  = error "Not enough elements"
+lB1 [a] = error "Not enough elements"
+lB1 xs  = if lB1R_ xs 10
+          then error "Infinite-ish list, won't continue"
+          else xs !! ((length xs) - 2)
 
 lB1R_ :: [a] -> Int -> Bool
 lB1R_ [] _ = False
