@@ -39,7 +39,7 @@ main = do
       exitWith $ ExitFailure 1
 
   stop <- getTime
-  printf "%.2f secs" $ stop - start
+  printf "%.2f secs\n" $ stop - start
 
 
 -- Functional implementations:
