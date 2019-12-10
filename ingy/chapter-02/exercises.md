@@ -13,8 +13,9 @@
 
 1. Haskell provides a standard function, `last :: [a] -> a`, that returns the last element of a list.
    From reading the type alone, what are the possible valid behaviours (omitting crashes and infinite loops) that this function could have?
-   * Return one of the elements in the list
+   * Return value must be an actual element in the list
    What are a few things that this function clearly cannot do?
+   * Take an empty list as an argument
    * Return something not in the list
    * Return a list
    * Not return anything
