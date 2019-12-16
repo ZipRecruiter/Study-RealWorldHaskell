@@ -1,5 +1,15 @@
+SUBMODULES := dnmfarrell
+SUBMODULES := $(SUBMODULES:%=%/.git)
+
 default:
 
-pull: dnmfarrell
+pull: $(SUBMODULES)
 	git pull --rebase
-	(cd dnmfarrell && git pull)
+	git submodule update
+
+$(SUBMODULES):
+	git submodule init -- $(@:%.git=%)
+	git submodule update -- $(@:%.git=%)
+
+clean:
+	git submodule deinit --all
