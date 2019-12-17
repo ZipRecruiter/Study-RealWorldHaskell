@@ -2,9 +2,25 @@
 ## Exercises
 1. Write the converse of `fromList` for the `List` type: a function that takes a `List a` and generates a `[a]`.
 
+```haskell
+data List a = Cons a (List a)
+            | Nil
+              deriving (Show)
+
+toList :: List a -> [a]
+toList (Cons x xs) = x : toList xs
+toList Nil = []
+```
+
 2. Define a tree type that has only one constructor, like our Java example.
    Instead of the `Empty` constructor, use the `Maybe` type to refer to a node's children.
 
+```haskell
+data Tree a = Node a (Maybe (Tree a)) (Maybe (Tree a))
+              deriving (Show)
+
+-- Node "parent" (Just (Node "child1" Nothing Nothing)) Nothing
+```
 
 ## Exercises
 
@@ -62,7 +78,15 @@ is_pali (xs) = case mod (length xs) 2 of
 6. Create a function that sorts a list of lists based on the length of each sublist.
    (You may want to look at the `sortBy` function from the `Data.List` module.)
 
+```haskell
+import Data.List
 
+sortByLen :: [[a]] -> [[a]]
+sortByLen (xs) = sortBy sortByLen' xs
+                 where
+                   sortByLen' :: [a] -> [b] -> Ordering
+                   sortByLen' xs ys = compare (length xs) (length ys)
+```
 
 7. Define a function that joins a list of lists together using a separator value.
    ```
@@ -85,13 +109,52 @@ is_pali (xs) = case mod (length xs) 2 of
    "foo,bar,baz,quux"
    ```
 
+```haskell
+intersperse :: Char -> [[Char]] -> [Char]
+intersperse a [] = []
+intersperse a (x:[]) = x
+intersperse a (x:xs) = x ++ [a] ++ (intersperse a xs)
+```
+
 8. Using the binary `tree` type that we defined earlier in this chapter, write a function that will determine the height of the tree.
    The height is the largest number of hops from the root to an `Empty`.
    For example, the `tree Empty` has height zero; `Node "x" Empty Empty` has height one; `Node "x" Empty (Node "y" Empty Empty)` has height two; and so on.
 
+```haskell
+data Tree a = Node a (Maybe (Tree a)) (Maybe (Tree a))
+              deriving (Show)
+
+treeHeight :: Maybe (Tree a) -> Int
+treeHeight Nothing = 0
+treeHeight (Just (Node n lt rt)) = 1 + max (treeHeight lt) (treeHeight rt)
+
+-- test tree1
+--        "parent"
+--       /        \
+--     child1     Nothing
+--    /      \
+-- child2    Nothing
+tree1 = Node "parent" (Just (Node "child1" (Just (Node "child2" Nothing Nothing)) Nothing)) Nothing
+
+
+-- test tree2 (unbalanced right)
+--  "p"
+--  |  \
+-- Not  1
+--      | \
+--      N  2
+--         | \
+--         N  3
+tree2 = Node "parent" Nothing (Just $ Node "1" Nothing (Just $ Node "2" Nothing (Just $ Node "3" Nothing Nothing)))
+```
+
 9. Consider three two-dimensional points `a`, `b`, and `c`.
    If we look at the angle formed by the line segment from `a` to `b` and the line segment from `b` to `c`, it either turns left, turns right, or forms a straight line.
    Define a `Direction` data type that lets you represent these possibilities.
+
+```haskell
+data Direction = Left | Right | Straight
+```
 
 10. Write a function that calculates the turn made by three 2D points and returns a `Direction`.
 
