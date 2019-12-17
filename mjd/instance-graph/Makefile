@@ -1,6 +1,6 @@
 
-# BASETYPES= Integral Floating Num Bool
-BASETYPES= Monad
+BASETYPES= Integral Floating Num Bool
+# BASETYPES= Monad
 
 all: instances.svg instances.png
 
