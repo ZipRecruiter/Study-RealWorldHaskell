@@ -4,8 +4,8 @@ SUBMODULES := $(SUBMODULES:%=%/.git)
 default:
 
 pull: $(SUBMODULES)
-	git pull --rebase
-	git submodule update
+	git pull --rebase --recurse-submodules
+	git submodule update --remote
 
 $(SUBMODULES):
 	git submodule init -- $(@:%.git=%)
