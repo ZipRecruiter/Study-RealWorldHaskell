@@ -158,9 +158,35 @@ data Direction = Left | Right | Straight
 
 10. Write a function that calculates the turn made by three 2D points and returns a `Direction`.
 
+```haskell
+data Dir = Left | Right | Straight
+                 deriving Show
+
+data Point = Point Float Float
+             deriving Show
+
+getDir :: (Point, Point, Point) -> Dir
+getDir (Point x1 y1, Point x2 y2, Point x3 y3) = if d >= 179.99999999 && d <= 180.999999
+                                                 then Straight
+                                                 else if d > 180
+                                                   then Main.Left
+                                                   else Main.Right
+                   where
+                     a = atan2 (x1 - x2) (y1 - y2)
+                     c = atan2 (x3 - x2) (y3 - y2)
+                     r = c - a
+                     d = abs $ r * 180 / pi -- just for readability
+```
+
 11. Define a function that takes a list of 2D points and computes the direction of each successive triple.
     Given a list of points `[a,b,c,d,e]`, it should begin by computing the turn made by `[a,b,c]`, then the turn made by `[b,c,d]`, then `[c,d,e]`.
     Your function should return a list of `Direction`.
+
+```haskell
+listDirs :: [Point] -> [Dir]
+listDirs (x:y:z:xs) = [getDir (x, y, z)] ++ (listDirs (y : z : xs))
+listDirs _ = []
+```
 
 12. Using the code from the preceding three exercises, implement Graham's scan algorithm for the convex hull of a set of 2D points.
     You can find good description of what a [convex hull](http://en.wikipedia.org/wiki/Convex_hull) is, and how the [Graham scan algorithm](http://en.wikipedia.org/wiki/Graham_scan) should work, on Wikipedia.
