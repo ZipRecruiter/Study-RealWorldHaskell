@@ -45,7 +45,7 @@ splitWith :: (a -> Bool) -> [a] -> [[a]]
 
 ### solution
 
-``haskell
+```haskell
 splitWith :: (a -> Bool) -> [a] -> [[a]]
 splitWith _ []   = []
 splitWith f (xs) = let (fore, aft) = break f (dropWhile f xs)
