@@ -108,6 +108,54 @@ done
 ```
 4. Write a program that transposes the text in a file. For instance, it should convert `"hello\nworld\n"` to `"hw\neo\nlr\nll\nod\n"`.
 
+### solution
+
+```haskell
+mport System.Environment (getArgs)
+import Text.Printf
+
+transpose :: [Char] -> [Char] -> [Char]
+transpose (x:xs) (y:ys) = [x, y, '\n'] ++ (transpose xs ys)
+transpose _ (y:ys) = [' ', y, '\n'] ++ (transpose [] ys)
+transpose (x:xs) _ = [x, ' ', '\n'] ++ (transpose xs [])
+transpose _ _ = []
+
+showFirstLast :: [String] -> IO ()
+showFirstLast [] = printf "done\n"
+showFirstLast (x:[]) = do
+    printf "trailing line: %s\n" x
+    showFirstLast []
+showFirstLast (x:y:xs)  = do
+    print tx
+    showFirstLast xs
+    where
+        tx = transpose x y
+
+
+splitShow :: String -> IO ()
+splitShow inputFile = do
+    fileData <- readFile inputFile
+    let linex = lines fileData
+    showFirstLast linex
+
+main = do
+    args <- getArgs
+    case args of
+        [input] -> splitShow input
+        _       -> printf "error: exactly one argument needed\n"
+```
+
+*output*
+```
+λ /tmp$ cat y.test
+hello
+world
+λ /tmp$ runghc x.hs y.test
+Loaded package environment from /Users/tonyo/.ghc/x86_64-darwin-8.6.5/environments/default
+"hw\neo\nlr\nll\nod\n"
+done
+```
+
 ## How to Think About Loops
 
 1. Use a fold (choosing the appropriate fold will make your code much simpler) to rewrite and improve upon the `asInt` function from the section called “Explicit recursion”.
@@ -121,6 +169,15 @@ ghci> asInt_fold "-31337"
 -31337
 ghci> asInt_fold "1798"
 1798
+```
+```haskell
+import Data.Char (digitToInt)
+
+asInt_fold :: String -> Int
+asInt_fold x = (*) (if head x == '-' then -1 else 1) (fst $ foldr toInt' (0, 0) (if head x == '-' then drop 1 x else x))
+               where
+                  toInt' :: Char -> (Int, Int) -> (Int, Int)
+                  toInt' x (c, p) = (c + (digitToInt(x) * (10 ^ p)), p + 1)
 ```
 
 2. The `asInt_fold` function uses `error`, so its callers cannot handle errors. Rewrite it to fix this problem.
@@ -138,6 +195,27 @@ ghci> asInt_either "foo"
 Left "non-digit 'o'"
 ```
 
+*solution*
+
+```haskell
+import Data.Char (digitToInt)
+
+asInt_fold :: String -> Int
+asInt_fold x = (*) (if head x == '-' then -1 else 1) (fst $ foldr toInt' (0, 0) (if head x == '-' then drop 1 x else x))
+               where
+                  toInt' :: Char -> (Int, Int) -> (Int, Int)
+                  toInt' x (c, p) = (c + (digitToInt(x) * (10 ^ p)), p + 1)
+
+isInt :: String -> Bool
+isInt [] = True
+isInt (x:xs) = compare x '0' >= EQ && compare x '9' <= EQ && isInt xs
+
+type ErrorMessage = String
+asInt_either :: String -> Either ErrorMessage Int
+asInt_either x | (isInt $ if head x == '-' then drop 1 x else x) = Right $ asInt_fold x
+               | otherwise = Left  $ error "Input not a valid integer"
+```
+
 3. The Prelude function `concat` concatenates a list of lists into a single list, and has the following type.
 
 ```haskell
@@ -147,7 +225,26 @@ concat :: [[a]] -> [a]
 
 Write your own definition of `concat` using `foldr`.
 
+```haskell
+concatT :: [[a]] -> [a]
+concatT xs = foldr concatT' [] xs
+             where
+               concatT' :: [a] -> [a] -> [a]
+               concatT' a x = a ++ x
+```
+
 4. Write your own definition of the standard `takeWhile` function, first using explicit recursion, then `foldr`.
+
+```haskell
+takeWhileR :: (a -> Bool) -> [a] -> [a]
+takeWhileR _ [] = []
+takeWhileR f (x:xs) = (if f x then [x] ++ takeWhileR f xs else [])
+
+takeWhileF :: Foldable t => (a -> Bool) -> t a -> [a]
+takeWhileF f x = foldr tWF' [] x
+                 where
+                  tWF' x c = if f x then x : c else []
+```
 
 5. The `Data.List` module defines a function, `groupBy`, which has the following type.
 
@@ -158,10 +255,34 @@ groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
 
 Use *ghci* to load the `Data.List` module and figure out what `groupBy` does, then write your own implementation using a fold.
 
+*solution*
+```haskell
+import Data.List (groupBy)
+
+groupByF :: (a -> a -> Bool) -> [a] -> [[a]]
+groupByF f (x:xs) = scnd' $ foldl groupByF' ([], [x], x) xs
+               where
+                 groupByF' (a, b, c) x = if f c x then (a, b ++ [x], x) else (a ++ [b], [x], x)
+                 scnd' (a,b,_) = a ++ [b]
+
+testgb :: Eq a => (a -> a -> Bool) -> [a] -> (Bool, [[a]], [[a]])
+testgb f x = (folded == std, folded, std) 
+             where
+               folded = groupByF f x
+               std    = groupBy f x
+```
+
 6. How many of the following Prelude functions can you rewrite using list folds?
   - any
   - cycle
   - words
   - unlines
 
+*solution*
+```
+all of them.
+```
+
 For those functions where you can use either `foldl'` or `foldr`, which is more appropriate in each case?
+
+
