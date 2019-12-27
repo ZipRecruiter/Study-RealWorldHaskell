@@ -47,7 +47,7 @@ main = do
         "main = do print $ " ++ func
 
   let program = intercalate "\n" [
-        "import Control.Exception",
+        "import Control.Exception (SomeException)",
         code,
         main_func,
         "",
