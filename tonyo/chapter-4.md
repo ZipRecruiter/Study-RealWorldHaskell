@@ -285,4 +285,31 @@ all of them.
 
 For those functions where you can use either `foldl'` or `foldr`, which is more appropriate in each case?
 
+*solution*
+```
+anyF :: Foldable t => (a -> Bool) -> t a -> Bool
+anyF f xs = foldr (\x c -> f x || c) False xs
+-- foldr because we don't necessarily need the entire list
 
+cycleF :: Foldable t => t a -> [a]
+cycleF x = (foldl (\c x -> c ++ [x]) [] x) ++ (cycleF x)
+-- foldl - we'll always potentially want to crash
+
+wordsF :: Foldable t => t Char -> [[Char]]
+wordsF x = fst c ++ [snd c]
+           where
+            ws = [' ', '\t', '\n']
+            c  = foldl
+                   (\(ca, c1) x -> if not (null c1) && any (==x) ws
+                                   then (ca ++ [c1], [])
+                                   else (ca, c1 ++ if null c1 && any (==x) ws
+                                                   then []
+                                                   else [x]))
+                   ([], [])
+                   x
+-- foldl - we always need the entire list
+
+unlinesF :: Foldable t => t [Char] -> [Char]
+unlinesF x = init $ foldl (\c x -> c ++ x ++ ['\n']) [] x
+-- foldl - we always need the entire list
+```
