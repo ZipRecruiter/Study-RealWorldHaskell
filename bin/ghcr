@@ -1,14 +1,21 @@
 #!/usr/bin/env stack
--- stack --resolver lts-9.21 script --package raw-strings-qq --package process
+{- stack
+     --resolver lts-9.21 script
+     --package raw-strings-qq
+     --package process
+     --package filepath
+     --package directory
+-}
 
 {-# LANGUAGE BangPatterns #-}
 
 {-
-  This is a program for testing haskell files that just contain pure functional
-  code. Here are some example uses:
+'ghcr' is a program for testing haskell files that contain pure functional code.
+
+Here are some example uses:
 
   # Run a Haskell expression using a code file:
-  ./bin/ghcr mjd/chapter-04/splitWith.hs "splitWith2 (== ' ') \"foo  bar\""
+  ./bin/ghcr mjd/chapter-04/splitWith.hs "splitWith2 (== ' ') \"foo bar\""
 
   # Run an expression that reads from stdin and writes to stdout.
   # Note the `-i` flag for 'interactive':
@@ -16,25 +23,43 @@
 
   # Run a program's test function (inline test suite):
   ./bin/ghcr ingy/chapter-04/a-2.hs test
- -}
+  ./bin/ghcr ingy/chapter-04/b-1.hs test
 
-import System.Environment
-import System.IO
-import System.Process
-import System.Exit
-import Data.List
+Options:
 
-usage = "Usage: ghcr [-i] <file> <func>"
+-h -- Help. Print this documentation.
+-i -- Interactive. Read from stdin, write to stdout.
+-d -- Debug. cat temp file on error.
+
+-}
+
+import Data.Maybe           (fromJust)
+import System.Directory     (findExecutable)
+import System.Environment   (getArgs)
+import System.Exit          (exitSuccess, ExitCode(ExitSuccess))
+import System.FilePath      (takeDirectory, takeFileName, (</>))
+import System.IO            (readFile, writeFile)
+import System.Process       (system, readProcess)
+
+usage = "Usage: ghcr [<option>...] <file> <func>"
 
 main = do
   argv <- getArgs
-  let args = filter (not.isOption) argv
+
+  if "-h" `elem` argv ||
+     "-?" `elem` argv
+  then do
+    printHelp
+    exitSuccess
+  else putStr ""
+
+  let args = filter (\s -> (head s) /= '-') argv
   let ![file, func] = if length args == 2
       then args
       else errorWithoutStackTrace usage
 
-  mktemp <- readProcess "mktemp" ["-d"] ""
-  let tempDir = init mktemp
+  mktemp <- readProcess "mktemp" ["-d", "/tmp/ghcr.XXXXXXXX"] ""
+  let tempDir = init mktemp     -- Remove trailing newline
       tempFile = tempDir ++ "/test.hs"
 
   code <- readFile file
@@ -46,9 +71,11 @@ main = do
       else
         "main = do print $ " ++ func
 
-  let program = intercalate "\n" [
+  let program = unlines [
         "import Control.Exception (SomeException)",
         code,
+        "-- 'ghcr' ADDED LINES BELOW ----------------------------------------",
+        "",
         main_func,
         "",
         "printErr :: SomeException -> IO ()",
@@ -64,10 +91,17 @@ main = do
     system $ "rm -fr " ++ tempDir
     putStr ""
   else do
-    putStrLn $ "\n*** Error in " ++ tempFile ++ ":\n"
-    putStrLn program
+    putStrLn $ "\n*** See file '" ++ tempFile ++ "'\n"
+    if "-d" `elem` argv
+    then putStr program
+    else putStr ""
 
   where
-    isOption s = head s == '-'
+    printHelp = do
+      progPath <- findExecutable "ghcr"
+      let path = fromJust progPath
+          binPath = (takeDirectory path) </> (takeFileName path)
+
+      system $ "head -n32 " ++ binPath ++ " | tail -n20"
 
 -- vim: ft=haskell sw=2:
