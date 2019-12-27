@@ -291,9 +291,9 @@ anyF :: Foldable t => (a -> Bool) -> t a -> Bool
 anyF f xs = foldr (\x c -> f x || c) False xs
 -- foldr because we don't necessarily need the entire list
 
-cycleF :: Foldable t => t a -> [a]
-cycleF x = (foldl (\c x -> c ++ [x]) [] x) ++ (cycleF x)
--- foldl - we'll always potentially want to crash
+cycleF :: [a] -> [a]
+cycleF xs = foldr (\_ c -> xs ++ c) [] [1..]
+-- foldr - it's fine
 
 wordsF :: Foldable t => t Char -> [[Char]]
 wordsF x = fst c ++ [snd c]
