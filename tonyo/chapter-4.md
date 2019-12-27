@@ -287,29 +287,26 @@ For those functions where you can use either `foldl'` or `foldr`, which is more 
 
 *solution*
 ```
+-- "foldr is far superior" - @mjd
 anyF :: Foldable t => (a -> Bool) -> t a -> Bool
 anyF f xs = foldr (\x c -> f x || c) False xs
--- foldr because we don't necessarily need the entire list
 
 cycleF :: [a] -> [a]
 cycleF xs = foldr (\_ c -> xs ++ c) [] [1..]
--- foldr - it's fine
 
 wordsF :: Foldable t => t Char -> [[Char]]
-wordsF x = fst c ++ [snd c]
+wordsF x = [snd c] ++ fst c
            where
-            ws = [' ', '\t', '\n']
-            c  = foldl
-                   (\(ca, c1) x -> if not (null c1) && any (==x) ws
-                                   then (ca ++ [c1], [])
-                                   else (ca, c1 ++ if null c1 && any (==x) ws
-                                                   then []
-                                                   else [x]))
-                   ([], [])
-                   x
--- foldl - we always need the entire list
+             ws = [' ', '\t', '\n']
+             c  = foldr
+                  (\x (ca, c1) -> if not (null c1) && any (==x) ws
+                                  then ([c1] ++ ca, [])
+                                  else (ca, if null c1 && any (==x) ws
+                                            then []
+                                            else [x] ++ c1))
+                  ([], [])
+                  x
 
 unlinesF :: Foldable t => t [Char] -> [Char]
-unlinesF x = init $ foldl (\c x -> c ++ x ++ ['\n']) [] x
--- foldl - we always need the entire list
+unlinesF x = foldr (\x c -> x ++ ['\n'] ++ c) [] x
 ```
