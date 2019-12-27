@@ -49,7 +49,7 @@ splitWith :: (a -> Bool) -> [a] -> [[a]]
 splitWith :: (a -> Bool) -> [a] -> [[a]]
 splitWith _ []   = []
 splitWith f (xs) = let (fore, aft) = break f (dropWhile f xs)
-                   in [fore] ++ (splitWith f aft)
+                   in [fore] ++ (splitWith f (dropWhile f aft))
 ```
 
 3. Using the command framework from the section called “A simple command line framework”, write a program that prints the first word of each line of its input.
