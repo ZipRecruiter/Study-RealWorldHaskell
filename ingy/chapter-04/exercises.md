@@ -13,6 +13,26 @@
    safeInit :: [a] -> Maybe [a]
    ```
 
+   ```
+   safeHead :: [a] -> Maybe a
+   safeHead [] = Nothing
+   safeHead xs = Just $ head xs
+
+   safeTail :: [a] -> Maybe [a]
+   safeTail xs = if null xs then Nothing else Just $ tail xs
+
+   safeLast :: [a] -> Maybe a
+   safeLast xs =
+     if null xs
+     then Nothing
+     else (Just . last) xs
+
+   safeInit :: [a] -> Maybe [a]
+   safeInit xs
+     | null xs = Nothing
+     | otherwise = Just . init $ xs
+   ```
+
 2. Write a function `splitWith` that acts similarly to `words`, but takes a predicate and a list of any type, and splits its input list on every element for which the predicate returns `False`.
 
    ```haskell
@@ -20,7 +40,27 @@
    splitWith :: (a -> Bool) -> [a] -> [[a]]
    ```
 
+   ```
+   splitWith :: (a -> Bool) -> [a] -> [[a]]
+   splitWith = (dropWhile null .).splitWith'
+     where
+     splitWith' _ [] = []
+     splitWith' g ys = word:(splitWith' g rest)
+       where
+       word = takeWhile (not.g) ys
+       rest = dropWhile g $ drop (length word + 1) ys
+   ```
+
 3. Using the command framework from the section called “A simple command line framework”, write a program that prints the first word of each line of its input.
+
+   ```
+   -- Run with:
+   -- ./bin/ghcr -i ingy/chapter-04/a-3.hs firstWords < ingy/chapter-04/a-3.hs
+   firstWords = unlines.(map firstWord).lines
+
+   firstWord [] = []
+   firstWord xs = (head.words) xs
+   ```
 
 4. Write a program that transposes the text in a file.
    For instance, it should convert `"hello\nworld\n"` to `"hw\neo\nlr\nll\nod\n"`.
@@ -40,6 +80,15 @@
    1798
    ```
 
+   ```
+   import Data.Char (digitToInt)
+
+   asInt_fold :: String -> Int
+   asInt_fold ('-':xs) = 0 - asInt_fold xs
+   asInt_fold xs = foldl step 0 xs
+     where step a x = 10 * a + digitToInt x
+   ```
+
    Extend your function to handle the following kinds of exceptional conditions by calling `error`.
 
    ```
@@ -53,6 +102,17 @@
    *** Exception: Char.digitToInt: not a digit '.'
    ghci> asInt_fold "314159265358979323846"
    564616105916946374
+   ```
+
+   ```
+   asInt_fold :: String -> Int
+   asInt_fold [] = error "Empty string is not a number"
+   asInt_fold "-" = error "'-' is not a number"
+   asInt_fold ('-':xs) = 0 - asInt_fold xs
+   asInt_fold xs = foldl step 0 xs
+     where
+       step _ '.' = error "Can't handle numbers with '.'"
+       step a x = 10 * a + digitToInt x
    ```
 
 2. The `asInt_fold` function uses `error`, so its callers cannot handle errors.
@@ -81,6 +141,21 @@
    Write your own definition of `concat` using `foldr`.
 
 4. Write your own definition of the standard `takeWhile` function, first using explicit recursion, then `foldr`.
+
+   ```
+   takeWhile' :: (a -> Bool) -> [a] -> [a]
+   takeWhile' _ [] = []
+   takeWhile' f (x:xs)
+     | not $ f x = []
+     | otherwise = x:(takeWhile' f xs)
+
+   takeWhile'' :: (a -> Bool) -> [a] -> [a]
+   takeWhile'' f xs = foldr step [] xs
+     where
+       step x a
+         | not $ f x = []
+         | otherwise = x:a
+   ```
 
 5. The `Data.List` module defines a function, `groupBy`, which has the following type.
 
