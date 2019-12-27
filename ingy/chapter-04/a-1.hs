@@ -15,3 +15,14 @@ safeInit :: [a] -> Maybe [a]
 safeInit xs
   | null xs = Nothing
   | otherwise = Just . init $ xs
+
+
+test = do
+  print $ safeHead [42..]
+  print $ safeHead ""
+  print $ safeTail "Fred"
+  print $ safeTail ""
+  print $ safeLast "Fred"
+  print $ safeLast ""
+  print $ safeInit "Freed"
+  print $ safeInit ""
