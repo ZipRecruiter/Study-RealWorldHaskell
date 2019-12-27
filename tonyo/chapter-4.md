@@ -111,7 +111,7 @@ done
 ### solution
 
 ```haskell
-mport System.Environment (getArgs)
+import System.Environment (getArgs)
 import Text.Printf
 
 transpose :: [Char] -> [Char] -> [Char]
