@@ -1,0 +1,13 @@
+eval "$(
+if test -n "$ZSH_VERSION"; then
+  root=$0
+elif test -n "$BASH_SOURCE"; then
+  root=${BASH_SOURCE[0]}
+else
+  exit
+fi
+root=$(cd "$(dirname "$root")" && pwd)
+cat <<...
+export PATH=$root/bin:$PATH
+...
+)"
