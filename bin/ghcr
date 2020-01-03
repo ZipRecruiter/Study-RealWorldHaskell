@@ -1,10 +1,10 @@
 #!/usr/bin/env stack
 {- stack
      --resolver lts-9.21 script
-     --package raw-strings-qq
-     --package process
+     --package executable-path
      --package filepath
-     --package directory
+     --package process
+     --package raw-strings-qq
 -}
 
 {-# LANGUAGE BangPatterns #-}
@@ -33,9 +33,10 @@ Options:
 
 -}
 
+import Data.List            (break)
 import Data.Maybe           (fromJust)
-import System.Directory     (findExecutable)
 import System.Environment   (getArgs)
+import System.Environment.Executable (getScriptPath)
 import System.Exit          (exitSuccess, ExitCode(ExitSuccess))
 import System.FilePath      (takeDirectory, takeFileName, (</>))
 import System.IO            (readFile, writeFile)
@@ -72,19 +73,22 @@ main = do
         "main = do print $ " ++ func
 
   let program = unlines [
-        "import Control.Exception (SomeException)",
         code,
         "-- 'ghcr' ADDED LINES BELOW ----------------------------------------",
         "",
-        main_func,
-        "",
-        "printErr :: SomeException -> IO ()",
-        "printErr e = putStrLn $ \"Error: \" ++ show e"
+        main_func
         ]
 
   writeFile tempFile program
 
-  rc <- system $ "runghc " ++ tempFile
+  spath <- getScriptPath
+  let path = takeWhile (/='"') $ drop 1 $ dropWhile (/='"') $ show spath
+
+  rc <- system $
+    "runghc -- -i$(cd $(dirname " ++
+    path ++
+    ")/../lib && pwd) " ++
+    tempFile
 
   if rc == ExitSuccess
   then do
@@ -98,10 +102,9 @@ main = do
 
   where
     printHelp = do
-      progPath <- findExecutable "ghcr"
-      let path = fromJust progPath
-          binPath = (takeDirectory path) </> (takeFileName path)
+      spath <- getScriptPath
+      let path = takeWhile (/='"') $ drop 1 $ dropWhile (/='"') $ show spath
 
-      system $ "head -n32 " ++ binPath ++ " | tail -n20"
+      system $ "head -n33 " ++ path ++ " | tail -n21"
 
 -- vim: ft=haskell sw=2:
