@@ -6,6 +6,9 @@
    As a hint, you might want to consider using the following types.
 
    ```haskell
+   -- Run the test suite with:
+   -- ./bin/ghcr ingy/chapter-04/a-1.hs test
+
    -- file: ch04/ch04.exercises.hs
    safeHead :: [a] -> Maybe a
    safeTail :: [a] -> Maybe [a]
@@ -41,8 +44,11 @@
    ```
 
    ```
+   -- Run the test suite with:
+   -- ./bin/ghcr ingy/chapter-04/a-2.hs test
+
    splitWith :: (a -> Bool) -> [a] -> [[a]]
-   splitWith = (dropWhile null .).splitWith'
+   splitWith f xs = dropWhile null $ splitWith' f xs
      where
      splitWith' _ [] = []
      splitWith' g ys = word:(splitWith' g rest)
@@ -56,6 +62,7 @@
    ```
    -- Run with:
    -- ./bin/ghcr -i ingy/chapter-04/a-3.hs firstWords < ingy/chapter-04/a-3.hs
+
    firstWords = unlines.(map firstWord).lines
 
    firstWord [] = []
@@ -64,6 +71,15 @@
 
 4. Write a program that transposes the text in a file.
    For instance, it should convert `"hello\nworld\n"` to `"hw\neo\nlr\nll\nod\n"`.
+   ```
+   -- Run with:
+   -- ./bin/ghcr -i ingy/chapter-04/a-4.hs transposeText < ingy/chapter-04/file1.txt
+
+   transposeText = unlines.transpose.lines
+
+   transpose xs = takeWhile (/="") $ map next [0..]
+     where next i = foldr (++) "" $ map (take 1 . drop i) xs
+   ```
 
 ## How to Think About Loops
 

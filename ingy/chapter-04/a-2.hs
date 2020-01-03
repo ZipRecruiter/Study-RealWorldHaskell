@@ -1,5 +1,5 @@
 splitWith :: (a -> Bool) -> [a] -> [[a]]
-splitWith = (dropWhile null .).splitWith'
+splitWith f xs = dropWhile null $ splitWith' f xs
   where
   splitWith' _ [] = []
   splitWith' g ys = word:(splitWith' g rest)
@@ -8,7 +8,7 @@ splitWith = (dropWhile null .).splitWith'
     rest = dropWhile g $ drop (length word + 1) ys
 
 
--- Run this test suite with:
+-- Run the test suite with:
 -- ./bin/ghcr ingy/chapter-04/a-2.hs test
 test = do
   print $ splitWith (==' ') ""

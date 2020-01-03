@@ -1,3 +1,6 @@
+-- Run the test suite with:
+-- ./bin/ghcr ingy/chapter-04/a-1.hs test
+
 safeHead :: [a] -> Maybe a
 safeHead [] = Nothing
 safeHead xs = Just $ head xs
