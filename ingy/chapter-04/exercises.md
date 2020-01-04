@@ -6,9 +6,6 @@
    As a hint, you might want to consider using the following types.
 
    ```haskell
-   -- Run the test suite with:
-   -- ./bin/ghcr ingy/chapter-04/a-1.hs test
-
    -- file: ch04/ch04.exercises.hs
    safeHead :: [a] -> Maybe a
    safeTail :: [a] -> Maybe [a]
@@ -44,9 +41,6 @@
    ```
 
    ```
-   -- Run the test suite with:
-   -- ./bin/ghcr ingy/chapter-04/a-2.hs test
-
    splitWith :: (a -> Bool) -> [a] -> [[a]]
    splitWith f xs = dropWhile null $ splitWith' f xs
      where
@@ -60,9 +54,6 @@
 3. Using the command framework from the section called “A simple command line framework”, write a program that prints the first word of each line of its input.
 
    ```
-   -- Run with:
-   -- ./bin/ghcr -i ingy/chapter-04/a-3.hs firstWords < ingy/chapter-04/a-3.hs
-
    firstWords = unlines.(map firstWord).lines
 
    firstWord [] = []
@@ -72,9 +63,6 @@
 4. Write a program that transposes the text in a file.
    For instance, it should convert `"hello\nworld\n"` to `"hw\neo\nlr\nll\nod\n"`.
    ```
-   -- Run with:
-   -- ./bin/ghcr -i ingy/chapter-04/a-4.hs transposeText < ingy/chapter-04/file1.txt
-
    transposeText = unlines.transpose.lines
 
    transpose xs = takeWhile (/="") $ map next [0..]
@@ -147,6 +135,26 @@
    Left "non-digit 'o'"
    ```
 
+   ```
+   import Data.Char (digitToInt)
+   import Data.Either (isLeft)
+   import Data.Either.Utils (fromRight)
+
+   asInt_either :: String -> Either String Int
+   asInt_either [] = Left "Empty string is not a number"
+   asInt_either "-" = Left "'-' is not a number"
+   asInt_either ('-':xs)
+     | isLeft result = result
+     | otherwise = Right $ 0 - (fromRight result)
+     where
+       result = asInt_either xs
+   asInt_either xs
+     | '.' `elem` xs = Left "Can't handle numbers with '.'"
+     | otherwise = Right $ foldl step 0 xs
+     where
+       step a x = 10 * a + digitToInt x
+   ```
+
 3. The Prelude function `concat` concatenates a list of lists into a single list, and has the following type.
 
    ```haskell
@@ -156,21 +164,21 @@
 
    Write your own definition of `concat` using `foldr`.
 
+   ```
+   concat' :: [[a]] -> [a]
+   concat' = foldr (++) []
+   ```
+
 4. Write your own definition of the standard `takeWhile` function, first using explicit recursion, then `foldr`.
 
    ```
    takeWhile' :: (a -> Bool) -> [a] -> [a]
    takeWhile' _ [] = []
-   takeWhile' f (x:xs)
-     | not $ f x = []
-     | otherwise = x:(takeWhile' f xs)
+   takeWhile' f (x:xs) =
+     if f x then x:(takeWhile' f xs) else []
 
-   takeWhile'' :: (a -> Bool) -> [a] -> [a]
-   takeWhile'' f xs = foldr step [] xs
-     where
-       step x a
-         | not $ f x = []
-         | otherwise = x:a
+   takeWhile'' f = foldr step []
+     where step x a = if f x then x:a else []
    ```
 
 5. The `Data.List` module defines a function, `groupBy`, which has the following type.
@@ -182,6 +190,14 @@
 
    Use *ghci* to load the `Data.List` module and figure out what `groupBy` does, then write your own implementation using a fold.
 
+   ```
+   groupBy' :: (a -> a -> Bool) -> [a] -> [[a]]
+   groupBy' f = foldr step []
+     where
+       step x [] = [[x]]
+       step x (y:xs) =
+         if f x (head y) then (x:y):xs else [x]:y:xs
+   ```
 6. How many of the following Prelude functions can you rewrite using list folds?
 
    - any
@@ -190,3 +206,11 @@
    - unlines
 
    For those functions where you can use either `foldl'` or `foldr`, which is more appropriate in each case?
+
+   ```
+   any' f = foldr (\x a -> f x || a) False
+   cycle' xs = foldr (\x a -> xs ++ a) [] [1..]
+   words' = filter (/="") . foldr step [""] where
+     step c (w:ws) = if c `elem` " \t\n" then "":w:ws else (c:w):ws
+   unlines' = foldr (\l a -> l ++ "\n" ++ a) ""
+   ```

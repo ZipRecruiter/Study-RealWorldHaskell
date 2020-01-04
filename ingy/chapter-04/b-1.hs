@@ -1,6 +1,7 @@
-import Data.Char (digitToInt)
 import Control.Exception (catch)
 import TryPrintErr (printErr)
+
+import Data.Char (digitToInt)
 
 asInt_fold :: String -> Int
 asInt_fold [] = error "Empty string is not a number"

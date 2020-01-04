@@ -1,15 +1,11 @@
 takeWhile' :: (a -> Bool) -> [a] -> [a]
 takeWhile' _ [] = []
-takeWhile' f (x:xs)
-  | not $ f x = []
-  | otherwise = x:(takeWhile' f xs)
+takeWhile' f (x:xs) =
+  if f x then x:(takeWhile' f xs) else []
 
 takeWhile'' :: (a -> Bool) -> [a] -> [a]
-takeWhile'' f xs = foldr step [] xs
-  where
-    step x a
-      | not $ f x = []
-      | otherwise = x:a
+takeWhile'' f = foldr step []
+  where step x a = if f x then x:a else []
 
 test = do
   print $ takeWhile' (/=' ') "foo bar"

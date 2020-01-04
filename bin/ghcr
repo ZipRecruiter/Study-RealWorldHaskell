@@ -5,11 +5,13 @@
      --package filepath
      --package process
      --package raw-strings-qq
+     --package MissingH
 -}
 
 {-# LANGUAGE BangPatterns #-}
 
 {-
+
 'ghcr' is a program for testing haskell files that contain pure functional code.
 
 Here are some example uses:
@@ -73,7 +75,7 @@ main = do
         "main = do print $ " ++ func
 
   let program = unlines [
-        code,
+        sourceFilter code,
         "-- 'ghcr' ADDED LINES BELOW ----------------------------------------",
         "",
         main_func
@@ -104,7 +106,20 @@ main = do
     printHelp = do
       spath <- getScriptPath
       let path = takeWhile (/='"') $ drop 1 $ dropWhile (/='"') $ show spath
+      text <- readFile path
 
-      system $ "head -n33 " ++ path ++ " | tail -n21"
+      putStr $
+        unlines $
+        drop 1 $
+        takeWhile (/="-}") $
+        dropWhile (/="{-") $
+        lines text
+
+    sourceFilter xs =
+      unlines $ map (\x ->
+        if (x == "-- ghcr-imports")
+          then "import Control.Exception (catch); import TryPrintErr (printErr)"
+          else x
+      ) $ lines xs
 
 -- vim: ft=haskell sw=2:
