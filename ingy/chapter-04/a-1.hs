@@ -1,6 +1,3 @@
--- Run the test suite with:
--- ./bin/ghcr ingy/chapter-04/a-1.hs test
-
 safeHead :: [a] -> Maybe a
 safeHead [] = Nothing
 safeHead xs = Just $ head xs
@@ -20,6 +17,8 @@ safeInit xs
   | otherwise = Just . init $ xs
 
 
+-- Run the test suite with:
+-- ./bin/ghcr ingy/chapter-04/a-1.hs test
 test = do
   print $ safeHead [42..]
   print $ safeHead ""
