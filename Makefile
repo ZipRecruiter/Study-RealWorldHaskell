@@ -6,9 +6,8 @@ default:
 force:
 
 pull: $(SUBMODULES)
-	git pull --rebase --recurse-submodules
-	git submodule update --remote
-	git submodule update
+	git pull --rebase
+	git submodule update --recursive --remote
 
 $(SUBMODULES): force
 	git submodule init -- $(@:%.git=%)
