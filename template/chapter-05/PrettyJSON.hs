@@ -17,7 +17,7 @@ renderJValue (JBool False) = text "false"
 renderJValue JNull         = text "null"
 renderJValue (JNumber num) = double num
 renderJValue (JString str) = string str
-renderJValue (JArray ary) = series '[' ']' renderJValue ary
+renderJValue (JArray ary)  = series '[' ']' renderJValue ary
 renderJValue (JObject obj) = series '{' '}' field obj
     where field (name,val) = string name
                           <> text ": "
@@ -29,6 +29,7 @@ string = enclose '"' '"' . hcat . map oneChar
 enclose :: Char -> Char -> Doc -> Doc
 enclose left right x = char left <> x <> char right
 
+oneChar :: Char -> Doc
 oneChar c = case lookup c simpleEscapes of
               Just r -> text r
               Nothing | mustEscape c -> hexEscape c
