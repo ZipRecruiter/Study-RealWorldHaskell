@@ -77,6 +77,8 @@ groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
 
 Use *ghci* to load the `Data.List` module and figure out what `groupBy` does, then write your own implementation using a fold.
 
+[groupBy.hs]
+
 6. How many of the following Prelude functions can you rewrite using list folds?
   - any
   - cycle
@@ -84,3 +86,5 @@ Use *ghci* to load the `Data.List` module and figure out what `groupBy` does, th
   - unlines
 
 For those functions where you can use either `foldl'` or `foldr`, which is more appropriate in each case?
+
+[moreFolds.hs]
