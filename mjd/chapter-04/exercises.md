@@ -62,7 +62,11 @@ concat :: [[a]] -> [a]
 
 Write your own definition of `concat` using `foldr`.
 
+[concat.hs]
+
 4. Write your own definition of the standard `takeWhile` function, first using explicit recursion, then `foldr`.
+
+[takeWhile.hs]
 
 5. The `Data.List` module defines a function, `groupBy`, which has the following type.
 
