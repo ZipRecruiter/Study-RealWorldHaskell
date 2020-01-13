@@ -12,7 +12,11 @@
 
 3. Using the command framework from the section called “A simple command line framework”, write a program that prints the first word of each line of its input.
 
+[ firstWord.hs ]
+
 4. Write a program that transposes the text in a file. For instance, it should convert `"hello\nworld\n"` to `"hw\neo\nlr\nll\nod\n"`.
+
+[ transpose.hs ]
 
 ## How to Think About Loops
 
@@ -29,6 +33,8 @@ ghci> asInt_fold "1798"
 1798
 ```
 
+[asInt.hs]
+
 2. The `asInt_fold` function uses `error`, so its callers cannot handle errors. Rewrite it to fix this problem.
 
 ```haskell
@@ -44,12 +50,15 @@ ghci> asInt_either "foo"
 Left "non-digit 'o'"
 ```
 
+[asInt.hs]
+
 3. The Prelude function `concat` concatenates a list of lists into a single list, and has the following type.
 
 ```haskell
 -- file: ch04/ch04.exercises.hs
 concat :: [[a]] -> [a]
 ```
+
 
 Write your own definition of `concat` using `foldr`.
 
