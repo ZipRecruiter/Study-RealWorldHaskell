@@ -15,4 +15,4 @@ $(NAME): *.hs Makefile
 	ghc $(NAME).hs
 
 clean:
-	rm -f *.hi *.o
+	rm -f *.hi *.o $(NAME)
