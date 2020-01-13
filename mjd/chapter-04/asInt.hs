@@ -32,15 +32,27 @@ asUnsignedInt_1 (d:ds) = do
 asUnsignedInt_2 ""     = failure "Empty digit list"
 asUnsignedInt_2 digits = foldM (\b a -> liftM (+ (b * 10)) (safeDigitToInt a)) 0 digits
 
+--
+asUnsignedInt_3 [] = failure "Empty digit list"
+asUnsignedInt_3 ls = asUnsignedInt_3' 0 ls where
+  asUnsignedInt_3' acc [] = result acc
+  asUnsignedInt_3' acc (d:ds) = do
+    d_  <- safeDigitToInt d
+    asUnsignedInt_3' (acc * 10 + d_) ds
+
 asInt_0 ('+' : digits) =          asUnsignedInt_0 digits
 asInt_0 ('-' : digits) = negate $ asUnsignedInt_0 digits
 asInt_0        digits =           asUnsignedInt_0 digits
 
-asInt_1 ('+' : digits) =               asUnsignedInt_1 digits
-asInt_1 ('-' : digits) = fmap negate $ asUnsignedInt_1 digits
-asInt_1        digits  =               asUnsignedInt_1 digits
+asInt_1 ('+' : digits) =               asUnsignedInt_1 $ reverse digits
+asInt_1 ('-' : digits) = fmap negate $ asUnsignedInt_1 $ reverse digits
+asInt_1        digits  =               asUnsignedInt_1 $ reverse digits
 
 asInt_2 ('+' : digits) =              asUnsignedInt_2 digits
 asInt_2 ('-' : digits) = fmap negate (asUnsignedInt_2 digits)
 asInt_2        digits  =              asUnsignedInt_2 digits
+
+asInt_3 ('+' : digits) =              asUnsignedInt_3 digits
+asInt_3 ('-' : digits) = fmap negate (asUnsignedInt_3 digits)
+asInt_3        digits  =              asUnsignedInt_3 digits
 
