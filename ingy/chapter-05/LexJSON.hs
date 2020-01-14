@@ -8,9 +8,9 @@ import Data.Char (isDigit)
 lexJSON :: String -> [JToken]
 lexJSON "" = []
 lexJSON ('{':xs)  = JTokenObjectStart : lexJSON xs
-lexJSON ('}':xs)  = JTokenObjectStart : lexJSON xs
-lexJSON ('[':xs)  = JTokenObjectStart : lexJSON xs
-lexJSON (']':xs)  = JTokenObjectStart : lexJSON xs
+lexJSON ('}':xs)  = JTokenObjectEnd   : lexJSON xs
+lexJSON ('[':xs)  = JTokenArrayStart  : lexJSON xs
+lexJSON (']':xs)  = JTokenArrayEnd    : lexJSON xs
 lexJSON (':':xs)  = JTokenPairSep     : lexJSON xs
 lexJSON (',':xs)  = JTokenListSep     : lexJSON xs
 

@@ -1,8 +1,8 @@
 
 module TokenJSON (
   JToken(..),
-  getString,
-  getNumber,
+  tokenString,
+  tokenNumber,
 ) where
 
 data JToken = JTokenObjectStart
@@ -18,8 +18,8 @@ data JToken = JTokenObjectStart
             | JTokenNull
               deriving (Eq, Show)
 
-getString :: JToken -> String
-getString (JTokenString s) = s
+tokenString :: JToken -> String
+tokenString (JTokenString s) = s
 
-getNumber :: JToken -> String
-getNumber (JTokenNumber n) = n
+tokenNumber :: JToken -> String
+tokenNumber (JTokenNumber n) = n

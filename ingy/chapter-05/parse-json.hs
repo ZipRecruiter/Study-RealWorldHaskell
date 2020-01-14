@@ -4,4 +4,6 @@ import ParseJSON
 
 import Control.Monad
 
-main = interact $ (unlines.(map show).parseJSON.lexJSON)
+--main = interact $ (unlines.(map show).parseJSON.lexJSON)
+main = interact $ show.parseJSON.lexJSON
+
