@@ -1,23 +1,27 @@
 # Example usage:
 #   make
-#   make test
-#   make run NAME=testmain
-#   make build NAME=testmain
+#   make test-lex
+#   make test-parse
+#   make run
+#   make build
 #   make clean
 
-NAME ?= lex-json
+programs := \
+    testmain \
+    lex-json \
+    parse-json \
 
-run: build
-	./$(NAME)
+run: testmain
+	./$<
 
-build: $(NAME)
-
-$(NAME): *.hs Makefile
-	ghc $(NAME).hs
+%: %.hs *.hs
+	ghc $<
 
 clean:
-	rm -f *.hi *.o $(NAME)
+	rm -f *.hi *.o $(programs)
 
-test-lex: build
-	printf '{true["foo" ,\n:0-1\t2.2\rfalse\n.3   -.4::5. -66.\n},' | \
-	    ./lex-json
+test-parse: parse-json
+	printf '{' | ./$<
+
+test-lex: lex-json
+	printf '{true["foo\"" ,\n:0-1\t2.2\rfalse\n.3   -.4::5. -66.\n},' | ./$<

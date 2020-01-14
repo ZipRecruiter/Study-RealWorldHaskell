@@ -49,6 +49,7 @@ lexString xs = (init string, rest)
   takeString :: String -> String
   takeString "" = error "End of stream parsing a string"
   takeString ('\n':_) = error "End of line parsing a string"
+  takeString ('\\':'"':ys) = '\\' : '"' : takeString ys
   takeString (y:ys) =
     if y == '"'
     then y:""
