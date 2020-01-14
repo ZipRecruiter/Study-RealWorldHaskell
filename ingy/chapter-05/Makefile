@@ -2,6 +2,7 @@
 #   make test
 #   make test-lexer
 #   make test-parser
+#   make test-suite
 #   make run
 #   make clean
 
@@ -19,6 +20,13 @@ run: testmain
 
 clean:
 	rm -f *.hi *.o $(programs)
+	rm -fr json-test-suite
+
+test-suite: json-parser json-test-suite
+	prove -v test-suite.bash
+
+json-test-suite:
+	git worktree add -f $@ $@
 
 test: test-lexer test-parser
 	@echo

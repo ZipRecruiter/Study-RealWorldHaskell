@@ -1,0 +1,6 @@
+/*.hi
+/*.o
+/testmain
+/json-lexer
+/json-parser
+/json-test-suite/
