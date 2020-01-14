@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -x
+
+n=0
+for t in JSONTestSuite/test_parsing/*.json; do
+  rc=0
+  n=$((n + 1))
+  output=$(./json-parser < "$t" 2>&1) || rc=1
+  ok=0
+  [[ $t == n_* ]] && ok=1
+  if [[ $t == i_* ]] || [[ $rc -eq $ok ]]; then
+    echo "ok $n - $t"
+  else
+    echo "ok $n - $t"
+  fi
+done
+
+echo "1..$n"

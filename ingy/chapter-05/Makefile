@@ -18,7 +18,13 @@ run: testmain
 	ghc $<
 
 clean:
-	rm -f *.hi *.o $(programs)
+	rm -f *.hi *.o $(programs) json-test-suite
+
+test-suite: json-parser JSONTestSuite
+	./run-test-suite
+
+json-test-suite:
+	git worktree add -f $@ $@
 
 test: test-lexer test-parser
 	@echo

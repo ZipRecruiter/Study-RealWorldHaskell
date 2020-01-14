@@ -74,4 +74,3 @@ lexNumber xs = (string, rest)
     | otherwise = ""
   getDecimal :: String -> String
   getDecimal = takeWhile isDigit
-
