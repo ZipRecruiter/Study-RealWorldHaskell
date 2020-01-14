@@ -23,7 +23,7 @@ yajp7_parse x = do
   return result
 
 yajp7_parse' :: [Char] -> IO JVal
-yajp7_parse' x = if null $ snd r
+yajp7_parse' x = if null $ ltrim' $ snd r
                  then return $ fst r
                  else error $
                    "You left some garbage at the end of your string noob: " ++ (snd r)
@@ -129,18 +129,40 @@ err x  = error $ "Unexpected input:" ++ x
 
 rstr :: Int -> String -> (Int, String)
 rstr _ [] = error "Unterminated string."
-rstr i (x:x':xs) = if x /= '\\' && x' == '"'
-                   then (i + 2, [x])
-                   else (i + fst esc + fst nxt, snd esc ++ snd nxt) 
-  where esc = if x' == '"' then (2, "\"") else (1, [x])
-        nxt = rstr i $ if x' == '"' then xs else x': xs
+rstr i ('\\':x:xs) = (i + 2 + fst rd + fst nxt, snd rd ++ snd nxt)
+  where
+    rn  = rnum (x:xs)
+    fc  = if x >= '0' && x <= '9'
+          then '0'
+          else if (\c -> any (c==) "\\bfnrtu/") x
+               then 'u'
+               else x
+    uni = take 4 xs
+    rd  = case fc of
+            '0' -> (-2 + fst rn, show $ snd rn)
+            '"' -> (0, "\"")
+            'u' -> if x == 'u' && not ((length uni) == 4 && (foldr (\c a -> a && any (c==) "0123456789ABCDEFabcdef") True uni))
+                   then error "Invalid unicode escape sequence"
+                   else (0, "\\" ++ [x])
+            _ -> error $ "Unrecognized escape \\" ++ [fc]
+    nxt = rstr i $ drop (fst rd) xs
+rstr i (x:xs) = if x == '"'
+                then (i + 1, [])
+                else if (\c -> any (c==) "\n\r\t\0") x
+                     then error "Invalid character in string."
+                     else (i + 1 + fst nxt, [x] ++ snd nxt)
+  where nxt = rstr i xs
 
 rnum :: String -> (Int, Double)
 rnum [] = error "Expected number."
-rnum x = (length rnum'', read rnum'' :: Double)
-  where rnum' (x:xs) = [x] ++ if null xs || (\c -> all (c/=) "0123456789.") pxs then [] else rnum' xs
+rnum x = if rnumh == '0' && (length $ take 2 rnumt) > 1 && ((\c -> all (c/=) "eE.") (head $ reverse $ take 2 rnumt))
+         then error $ "Not a valid JSON number, try again.  GOT: " ++ rnum''
+         else (length rnum'', read rnum'' :: Double)
+  where rnum' (x:xs) = [x] ++ if null xs || (\c -> all (c/=) "0123456789.eE+-") pxs then [] else rnum' xs
           where pxs = head xs
         rnum'' = rnum' x
+        rnumt  = if head rnum'' == '-' then tail rnum'' else rnum''
+        rnumh  = head rnumt
 
 ltrim :: [Char] -> (Int, String)
 ltrim x = (length $ fst s, snd s)

@@ -13,5 +13,6 @@ main = do
     [file] -> do
                 fdata <- readFile file
                 pres <- yajp7_parse fdata
+                print pres
                 exitWith $ if isErr pres then ExitFailure 1 else ExitSuccess 
     _      -> exitWith $ ExitFailure 2
