@@ -9,7 +9,7 @@
 programs := \
     testmain \
     json-lexer \
-    json-parser \
+    json-parser
 
 run: testmain
 	./$<
@@ -21,17 +21,45 @@ clean:
 	rm -f *.hi *.o $(programs)
 
 test: test-lexer test-parser
+	@echo
 
 test-lexer: json-lexer
 	@echo
-	@echo json-lexer tests:
+	@echo "===== json-lexer tests ========================================"
+	@echo
 	@echo "* Malformed string of valid JSON tokens:"
 	printf '{true["foo\"" ,\n:0-1\t2.2\rfalse\n.3   -.4::5. -66.\n},' | ./$<
+	@echo
 	@echo "* Well formed JSON:"
 	printf '[true,false,null,42,-3.14,"foo",{"a": [], "b": {}}]' | ./$<
+	@echo
+	@echo "* Error: unending string"
+	printf '"x":"y' | ./$< || true
+	@echo
+	@echo "* Error: unknown character"
+	printf ', +42' | ./$< || true
+	@echo
+	@echo "* Error: bad number"
+	printf '.1, -.1, -.' | ./$< || true
 
 test-parser: json-parser
 	@echo
-	@echo json-parser tests:
+	@echo "===== json-parser tests ======================================="
+	@echo
+	@echo "* Array of possible value types:"
+	printf '[{},[],"",-0,1.2,true,false,null]' | ./$<
+	@echo
 	@echo "* Valid JSON showing all forms:"
 	printf '[true,false,null,42,-3.14,"foo",{"a": [], "b": {}}]' | ./$<
+	@echo
+	@echo "* Error: trailing comma"
+	printf '{"foo":42,}' | ./$< || true
+	@echo
+	@echo "* Error: extra tokens"
+	printf 'true,false' | ./$< || true
+	@echo
+	@echo "* Error: unended object"
+	printf '[123,{"foo":42]' | ./$< || true
+	@echo
+	@echo "* Error: unended array"
+	printf '{"foo":[123,}' | ./$< || true

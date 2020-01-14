@@ -23,8 +23,6 @@ parseJSONValue _ = error "Unexpected token parsing JSON value"
 
 -- Array functions:
 parseJSONArray :: [JToken] -> (JValue, [JToken])
-parseJSONArray [] =
-  error "Never found ending ']' while parsing an array"
 parseJSONArray ts = (JArray values, ts')
   where (values, ts') = parseJSONList ts
 
@@ -41,8 +39,6 @@ makeValues ts = (value:values, ts')
 
 -- Object functions:
 parseJSONObject :: [JToken] -> (JValue, [JToken])
-parseJSONObject [] =
-  error "Never found ending '}' while parsing an object"
 parseJSONObject ts = (JObject pairs, ts')
   where (pairs, ts') = parseJSONPairs ts
 
@@ -53,6 +49,10 @@ parseJSONPairs ((JTokenString s):JTokenPairSep:ts) =
   makePairs s ts
 parseJSONPairs (JTokenListSep:(JTokenString s):JTokenPairSep:ts) =
   makePairs s ts
+parseJSONPairs (JTokenListSep:JTokenObjectEnd:_) =
+  error "Trailing comma not allowed in JSON object"
+parseJSONPairs _ =
+  error "Invalid or missing token while parsing object"
 
 makePairs :: String -> [JToken] -> ([(String, JValue)], [JToken])
 makePairs s ts = (pair:pairs, ts')

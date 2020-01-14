@@ -27,7 +27,7 @@ lexJSON xs
   | (c == '-' && (isDigit c' || c' == '.' && isDigit c'')) ||
     (isDigit c || c == '.' && isDigit c') =
     JTokenNumber num : lexJSON afterNum
-  | otherwise = error $ "Found unexpected char'" ++ c:"' parsing JSON"
+  | otherwise = error $ "Found unexpected char '" ++ c:"' lexing JSON"
   where
     c = head xs
     c' =
@@ -47,8 +47,8 @@ lexString xs = (init string, rest)
   string = takeString xs
   rest = drop (length string) xs
   takeString :: String -> String
-  takeString "" = error "End of stream parsing a string"
-  takeString ('\n':_) = error "End of line parsing a string"
+  takeString "" = error "End of stream lexing a string"
+  takeString ('\n':_) = error "End of line lexing a string"
   takeString ('\\':'"':ys) = '\\' : '"' : takeString ys
   takeString (y:ys) =
     if y == '"'
