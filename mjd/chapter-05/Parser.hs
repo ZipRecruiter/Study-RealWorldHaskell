@@ -94,10 +94,8 @@ seqStrings x = foldr (concWith (++)) (pure "") x
 
 fails = P $ const Nothing
 
-concWith f p1 p2 = do
-  v1 <- p1
-  v2 <- p2
-  return $ f v1 v2
+concWith :: (a -> b -> z) -> Parser a -> Parser b -> Parser z
+concWith = seqp2
 
 optional :: Parser a -> Parser (Maybe a)
 optional p = (fmap Just p) `orElse` pure Nothing
