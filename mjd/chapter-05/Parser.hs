@@ -3,7 +3,7 @@ module Parser
       Parser
     , andThen
     , orElse, alternatives
-    , lit, charser, token
+    , lit, charser, token, tokenE,
     , fails
     , concWith
     , pseq
@@ -57,9 +57,14 @@ alternatives ls = foldr orElse fails ls
 
 charser c = P $ \s -> if s == "" || head s /= c then Nothing
                       else return (tail s, c)
-
 -- charser c = lit [c]
-token cclass = alternatives $ map charser cclass
+
+-- token "blah" is a Parser String that matches as many
+-- a, b, h, l characters as possible and then stops
+-- empty token allowed
+tokenE = star . charclass
+-- empty token not allowed
+token = plus . charclass
 
 _ `startsWith` "" = True
 "" `startsWith` _  = False
