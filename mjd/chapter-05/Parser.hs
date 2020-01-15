@@ -14,6 +14,7 @@ module Parser
     , (<|>)
     , eof
     , before, after, between, enclosed_by, spacy
+    , delimitedList
     , app -- Not really
     )
 
@@ -166,3 +167,7 @@ seqp5 f pa pb pc pd pe = do
   d <- pd
   e <- pe
   return $ f a b c d e
+
+delimitedList :: Parser d -> Parser i -> Parser [i]
+delimitedList del item = ((star $ item `before` del) `andThen` (optional item))
+                         <|> \(hs,ho) -> maybe hs (\x -> hs ++ [x]) ho
