@@ -3,12 +3,10 @@
 import Parser
 import SimpleJSON
 
-digit = token ['0' .. '9']
--- digits = fmap (foldr (++) []) (star digit)
-digits = plus digit
+digits = token ['0' .. '9']
 
 sign :: Num a => Parser a
-sign = fmap signFactor $ optional $ token "+-"
+sign = fmap signFactor $ optional $ charclass "+-"
        where signFactor (Just '-') = -1
              signFactor  _         = 1
 
