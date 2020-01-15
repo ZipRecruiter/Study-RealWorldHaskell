@@ -13,7 +13,7 @@ module Parser
     , star, plus
     , (<|>)
     , eof
-    , before, after
+    , before, after, between, enclosed_by, spacy
     , app -- Not really
     )
 
@@ -107,15 +107,18 @@ plus p = concWith (:) p (star p)
 
 -- like `andThen` but we only care about the first of the two
 before :: Parser a -> Parser b -> Parser a
-a `before` b = fmap fst (a `andThen` b)
+a `before` b = (a `andThen` b) <|> fst
 
 -- like `andThen` but we only care about the second of the two
 after :: Parser b -> Parser a -> Parser b
-b `after` a = fmap snd (a `andThen` b)
+b `after` a = (a `andThen` b) <|> snd
 
 -- x between p and q, but we don't care about p and q
 between :: Parser xx -> Parser a -> Parser yy -> Parser a
 between p x q = (x `before` q) `after` p
+
+enclosed_by :: Parser x -> Parser a -> Parser a
+enclosed_by x p = between x p x
 
 ws = tokenE " \t\n"
 spacy p = enclosed_by ws p
