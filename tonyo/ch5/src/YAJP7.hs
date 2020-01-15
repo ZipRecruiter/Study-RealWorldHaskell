@@ -23,17 +23,24 @@ yajp7_parse x = do
   return result
 
 yajp7_parse' :: [Char] -> IO JVal
-yajp7_parse' x = if null $ ltrim' $ snd r
+yajp7_parse' x = if null $ ltrim $ snd r
                  then return $ fst r
                  else error $
                    "You left some garbage at the end of your string noob: " ++ (snd r)
   where r = parseJSON' x
 
+yajp7_fparse :: [Char] -> JVal
+yajp7_fparse [] = error "Expected json, received empty string."
+yajp7_fparse x = if null $ ltrim $ snd r
+                 then fst r
+                 else error $ "You left some garbage at the end of your string noob: " ++ (snd r)
+  where r = parseJSON' x
+
 parseJSON' :: [Char] -> (JVal, String)
 parseJSON' []        = error "Expected json, received emptry string."
-parseJSON' x@(xs:xt) = let (j, r) = head (pstr n <|> pnum n <|> pbool n <|> parr n <|> pobj n <|> err n)
+parseJSON' x@(xs:xt) = let (j, r) = head (pstr n <|> pnum n <|> pbn n <|> parr n <|> pobj n <|> err n)
                        in (j, r)
-  where n   = ltrim' x
+  where n   = ltrim x
 
 uniq :: (Eq a) => [(a, b)] -> [(a, b)]
 uniq [] = []
@@ -47,34 +54,34 @@ pobj i
      | (head i') == '{' = if null i''
                           then error "Unexpected end of string"
                           else if head i'' == '}'
-                               then [(JObj [], ltrim' $ tail i'')]
+                               then [(JObj [], ltrim $ tail i'')]
                                else prcss $ kvp i'' 
      | otherwise = []
   where
-    i' = ltrim' i
-    i'' = ltrim' $ tail i'
+    i' = ltrim i
+    i'' = ltrim $ tail i'
     prcss c = [(flattened, r)]
             where
               flattened = JObj $ map fst $ uniq $ reverse c
-              last7     = ltrim' $ snd $ last c
+              last7     = ltrim $ snd $ last c
               r = if '}' /= head last7
                   then error $ "What kind of idiot forgets the object terminator? GOT: " ++ [head last7]
-                  else ltrim' $ tail last7
+                  else ltrim $ tail last7
     kvp i = case readP_to_S (satisfy (=='"')) i of
         [] -> []
-        [(m, r)] -> f (rstr 0 r) r
+        [(m, r)] -> f (tstr r) r
       where f x r' = if null rest || head rest /= ':'
                      then error rest -- "Expected colon after key in key value pair."
                      else [((
                          snd x
                        , fst val
                      ), rest')] ++ nxt 
-                     where rest  = ltrim' $ drop (fst x) r'
-                           val   = parseJSON' $ ltrim' $ tail rest
-                           rest' = ltrim' $ snd val
+                     where rest  = ltrim $ snd x 
+                           val   = parseJSON' $ ltrim $ tail rest
+                           rest' = ltrim $ snd val
                            rnull = not $ null $rest'
                            nxt   = if rnull && ',' == head rest'
-                                   then kvp . ltrim' $ tail rest'
+                                   then kvp . ltrim $ tail rest'
                                    else if rnull && '}' == head rest'
                                         then []
                                         else error $ "What kind of idiot forgets the object terminator?"
@@ -83,7 +90,7 @@ parr :: String -> [(JVal, String)]
 parr (i:is) 
      | i == '[' = if head is' == ']' then [(JArr [], tail is')] else parrv' is'
      | otherwise = []
-  where is' = ltrim' is
+  where is' = ltrim is
 
 parrv' :: String -> [(JVal, String)]
 parrv' n = prcss $ parrv'' n
@@ -96,7 +103,7 @@ parrv' n = prcss $ parrv'' n
                         else tail last7
         parrv'' n = [(fst v, r)] ++ recurse
                   where v = parseJSON' n
-                        r = ltrim' $ snd v
+                        r = ltrim $ snd v
                         p = head r
                         recurse = if p == ','
                                   then parrv'' (tail r)
@@ -105,67 +112,309 @@ parrv' n = prcss $ parrv'' n
                                        else []
 
 pstr :: String -> [(JVal, String)]
-pstr i = case readP_to_S (satisfy (=='"')) i of
-    [] -> []
-    [(m, r)] -> f r $ rstr 0 r
-  where f r x = [(JStr (snd x), ltrim' $ drop (fst x) r)]
+pstr ('"':is) = [(JStr (fst x), ltrim $ snd x)]
+  where x = tstr is
+pstr _ = []
 
 pnum :: String -> [(JVal, String)]
-pnum i = case readP_to_S (satisfy (\c -> any (c==) (['0'..'9'] ++ "-."))) i of
-    [] -> []
-    [(m, r)] -> f r (rnum ([m] ++ r))
-  where f r x = [(JNum (snd x), ltrim' $ drop (-1 + fst x) r)]
+pnum i'@(i:is)
+    | (\c -> any (c==) "1234567890+-Ee.") i = [(JNum (fst x), ltrim $ snd x)]
+    | otherwise = []
+  where x = tnum i'
+pnum _ = [] 
 
-pbool :: String -> [(JVal, String)]
-pbool x
-      | take 4 x == "true" = [(JBool True, drop 4 x)]
-      | take 5 x == "false" = [(JBool True, drop 5 x)]
-      | take 4 x == "null" = [(JNull, drop 4 x)]
-      | otherwise = []
+pbn :: String -> [(JVal, String)]
+pbn x
+    | take 4 x == "true" = [(JBool True, drop 4 x)]
+    | take 5 x == "false" = [(JBool True, drop 5 x)]
+    | take 4 x == "null" = [(JNull, drop 4 x)]
+    | otherwise = []
 
 err :: String -> [(JVal, String)]
 err [] = []
 err x  = error $ "Unexpected input:" ++ x
 
-rstr :: Int -> String -> (Int, String)
-rstr _ [] = error "Unterminated string."
-rstr i ('\\':x:xs) = (i + 2 + fst rd + fst nxt, snd rd ++ snd nxt)
-  where
-    rn  = rnum (x:xs)
-    fc  = if x >= '0' && x <= '9'
-          then '0'
-          else if (\c -> any (c==) "\\bfnrtu/") x
-               then 'u'
-               else x
-    uni = take 4 xs
-    rd  = case fc of
-            '0' -> (-2 + fst rn, show $ snd rn)
-            '"' -> (0, "\"")
-            'u' -> if x == 'u' && not ((length uni) == 4 && (foldr (\c a -> a && any (c==) "0123456789ABCDEFabcdef") True uni))
-                   then error "Invalid unicode escape sequence"
-                   else (0, "\\" ++ [x])
-            _ -> error $ "Unrecognized escape \\" ++ [fc]
-    nxt = rstr i $ drop (fst rd) xs
-rstr i (x:xs) = if x == '"'
-                then (i + 1, [])
-                else if (\c -> any (c==) "\n\r\t\0") x
-                     then error "Invalid character in string."
-                     else (i + 1 + fst nxt, [x] ++ snd nxt)
-  where nxt = rstr i xs
+tstr :: String -> (String, String)
+tstr ('"':xs) = ([],xs)
+tstr ('\\':x:xs) = (fst t ++ fst n, snd n)
+  where t = case x of
+              'u' -> ("\\u" ++ (uni $ take 4 xs), drop 4 xs)
+              '"' -> ("\\\"", xs)
+              x | (\c -> any (c==) "\\bfnrt/") x -> ("\\"++[x], xs)
+              _ -> error "Invalid escape sequence."
+        n = tstr $ snd t
+        uni x = if (length x) == 4 && (foldr (\c a -> a && any(c==) "1234567890abcdefABCDEF") True x) then x else error "Invalid unicode."
+tstr (x:xs) = ([x'] ++ fst n, snd n)
+  where x' = if (\c -> any (c==) "\0\r\n\t") x then error "Invalid character in string" else x
+        n = tstr xs
 
-rnum :: String -> (Int, Double)
-rnum [] = error "Expected number."
-rnum x = if rnumh == '0' && (length $ take 2 rnumt) > 1 && ((\c -> all (c/=) "eE.") (head $ reverse $ take 2 rnumt))
-         then error $ "Not a valid JSON number, try again.  GOT: " ++ rnum''
-         else (length rnum'', read rnum'' :: Double)
-  where rnum' (x:xs) = [x] ++ if null xs || (\c -> all (c/=) "0123456789.eE+-") pxs then [] else rnum' xs
-          where pxs = head xs
-        rnum'' = rnum' x
-        rnumt  = if head rnum'' == '-' then tail rnum'' else rnum''
-        rnumh  = head rnumt
+tnum :: String -> (Double, String)
+tnum [] = error "Expected a number."
+tnum x = (read (fst r) :: Double, snd r)
+  where tnum' [] = ("", "")
+        tnum' i'@(i:is) = case i of
+                     i | (\c -> any (c==) "1234567890+-Ee.") i ->
+                        ([i] ++ (fst n), snd n)
+                     _ -> ("", i') 
+          where n = tnum' is
+        v (a,b) = if a'' == '0' && (length $ take 2 a') > 1 && ((\c -> all (c/=) "eE.") (head $ reverse $ take 2 a'))
+                  then error $ "Not a valid number as far as JSON is concerned, maybe YAML will have you. GOT: " ++ a
+                  else (a,b)
+          where a'  = if head a == '-' then tail a else a
+                a'' = head a'
+        r = v $ tnum' x
 
-ltrim :: [Char] -> (Int, String)
-ltrim x = (length $ fst s, snd s)
+ltrim :: [Char] -> String
+ltrim x = snd s 
   where s = break (\y -> all (y/=) "\t\r\n ") x
-ltrim' :: [Char] -> String
-ltrim' = snd . ltrim
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
