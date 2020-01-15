@@ -1,8 +1,10 @@
-module YAJP7 (JVal(..), yajp7_parse) where
+module YAJP7 (JVal(..), yajp7_fparse, yajp7_parse, yajp7_print) where
 
 import Text.ParserCombinators.ReadP
 import Control.Applicative
 import Control.Exception
+import Data.List (intercalate)
+import Numeric (showHex)
 
 data JVal = JStr String
           | JNum Double
@@ -12,6 +14,36 @@ data JVal = JStr String
           | JArr [JVal]
           | JErr String
             deriving (Eq, Ord, Show)
+
+
+renderJVal :: JVal -> String
+renderJVal (JStr x)      = fixOut $ show x
+renderJVal (JNum x)      = show x
+renderJVal (JBool True)  = "true"
+renderJVal (JBool False) = "false"
+renderJVal JNull         = "null"
+
+renderJVal (JObj x) = "{" ++ pairs x ++ "}"
+  where pairs [] = ""
+        pairs xs = intercalate ", " $ map renderPair xs
+        renderPair (k,v) = show k ++ ": " ++ renderJVal v
+
+renderJVal (JArr x) = "[" ++ values x ++ "]"
+  where values [] = ""
+        values xs = intercalate ", " $ map renderJVal xs
+
+fixOut :: String -> String
+fixOut ('\\':'D':'E':'L':xs) = "\\u007F" ++ fixOut xs
+fixOut ('\\':x:xs)
+    | (\c -> any (c==) "1234567890") x = "\\u" ++ lxs ++ (fixOut $ drop (-1 + length xc) xs)
+    | otherwise = "\\" ++ [x] ++ fixOut xs
+ where xc = takeWhile (\c -> any (c==) "1234567890abcdefABCDEF") (x:xs)
+       lxs = lpad 4 '0' (showHex (read xc :: Int) "") 
+fixOut (x:xs) = [x] ++ fixOut xs
+fixOut [] = []
+
+yajp7_print :: JVal -> IO()
+yajp7_print x = putStrLn $ renderJVal x
 
 catchAny :: IO a -> (SomeException -> IO a) -> IO a
 catchAny = Control.Exception.catch
@@ -45,46 +77,37 @@ parseJSON' x@(xs:xt) = let (j, r) = head (pstr n <|> pnum n <|> pbn n <|> parr n
 uniq :: (Eq a) => [(a, b)] -> [(a, b)]
 uniq [] = []
 uniq (x:xs)
-     | null $ fmap (\c -> k == fst c) xs = uniq xs
+     | null $ fmap (\c -> if k == fst c then [] else [1]) xs = uniq xs
      | otherwise = [x] ++ uniq xs
   where k = fst x
 
 pobj :: String -> [(JVal, String)]
-pobj i
-     | (head i') == '{' = if null i''
-                          then error "Unexpected end of string"
-                          else if head i'' == '}'
-                               then [(JObj [], ltrim $ tail i'')]
-                               else prcss $ kvp i'' 
-     | otherwise = []
-  where
-    i' = ltrim i
-    i'' = ltrim $ tail i'
-    prcss c = [(flattened, r)]
-            where
-              flattened = JObj $ map fst $ uniq $ reverse c
-              last7     = ltrim $ snd $ last c
-              r = if '}' /= head last7
-                  then error $ "What kind of idiot forgets the object terminator? GOT: " ++ [head last7]
-                  else ltrim $ tail last7
-    kvp i = case readP_to_S (satisfy (=='"')) i of
-        [] -> []
-        [(m, r)] -> f (tstr r) r
-      where f x r' = if null rest || head rest /= ':'
-                     then error rest -- "Expected colon after key in key value pair."
-                     else [((
-                         snd x
-                       , fst val
-                     ), rest')] ++ nxt 
-                     where rest  = ltrim $ snd x 
-                           val   = parseJSON' $ ltrim $ tail rest
-                           rest' = ltrim $ snd val
-                           rnull = not $ null $rest'
-                           nxt   = if rnull && ',' == head rest'
-                                   then kvp . ltrim $ tail rest'
-                                   else if rnull && '}' == head rest'
-                                        then []
-                                        else error $ "What kind of idiot forgets the object terminator?"
+pobj ('{':i) = 
+    if null i' then error "Objects need terminators" else
+      if head i' == '}'
+      then [(JObj [], tail i')]
+      else [(JObj (reverse $ tail k), seq t' (ltrim $ tail r'))]
+  where i' = ltrim i
+        k  = reverse $ kvp i'
+        r' = ltrim $ fst $ head k
+        t' = if null r' || head r' /= '}' then error "Objects need terminators" else True
+pobj [] = []
+
+kvp :: String -> [(String, JVal)]
+kvp ('"':is) = [(key, fst val')] ++ nxt
+  where key' = tstr is
+        key  = fst key'
+        rest = ltrim $ snd key'
+        val' = if (head rest) == ':' then parseJSON' $ ltrim $ tail rest
+                                     else error "Colon expected in kvp"
+        rest' = ltrim $ snd val'
+        rhead = head rest'
+        nxt   = if null $ snd val' then error "Comma or terminator expected"
+                  else if rhead == ',' then kvp $ ltrim $ tail rest'
+                    else if rhead == '}' then [(ltrim rest', JNull)]
+                      else error "Unexpected input"
+kvp [] = [] 
+kvp i = error $ "Expected key, got: " ++ show i
 
 parr :: String -> [(JVal, String)]
 parr (i:is) 
@@ -126,7 +149,7 @@ pnum _ = []
 pbn :: String -> [(JVal, String)]
 pbn x
     | take 4 x == "true" = [(JBool True, drop 4 x)]
-    | take 5 x == "false" = [(JBool True, drop 5 x)]
+    | take 5 x == "false" = [(JBool False, drop 5 x)]
     | take 4 x == "null" = [(JNull, drop 4 x)]
     | otherwise = []
 
@@ -168,31 +191,8 @@ ltrim :: [Char] -> String
 ltrim x = snd s 
   where s = break (\y -> all (y/=) "\t\r\n ") x
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+lpad :: Int -> Char -> String -> String
+lpad i c v = if (length $ take i v) >= i then v else lpad i c ([c] ++ v)
 
 
 
