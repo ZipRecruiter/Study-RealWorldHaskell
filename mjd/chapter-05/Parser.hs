@@ -5,8 +5,8 @@ module Parser
     , orElse, alternatives
     , lit, charser, token, tokenE, charclass, ws
     , fails
-    , concWith
-    , pseq
+    , concWith, seqStrings
+    , pseq, seqp2, seqp3, seqp4, seqp5
     , optional
     , assert
     , def
@@ -76,7 +76,14 @@ _ `startsWith` "" = True
 lit :: String -> Parser String
 lit x = P $ \a -> if a `startsWith` x then return (drop (length x) a, x)
                   else Nothing
-                       
+
+-- Here are a bunch of parsers that each return a string.
+-- Run them in sequence, return the concatenation of the results
+-- if x is empty, the resulting parser always succeeds and returns ""
+seqStrings :: [Parser String] -> Parser String
+seqStrings x = foldr (concWith (++)) (pure "") x
+
+
 fails = P $ const Nothing
 
 concWith f p1 p2 = do
@@ -84,14 +91,11 @@ concWith f p1 p2 = do
   v2 <- p2
   return $ f v1 v2
 
-pseq :: [ Parser a ] -> Parser [a]
-pseq ps = foldr (concWith (:)) (pure []) ps
-
 optional :: Parser a -> Parser (Maybe a)
 optional p = (fmap Just p) `orElse` pure Nothing
 
 -- read no input, succeed if and only if f returns true for the upcoming input
-assert :: (String -> Bool) -> Parser ()                  
+assert :: (String -> Bool) -> Parser ()
 assert f = P $ \s -> if f s then return (s, ()) else Nothing
 
 -- Just like p, except that if p fails, yield v instead
@@ -130,3 +134,35 @@ p <|> f = fmap f p
 eof :: Parser ()
 eof = assert null
 
+pseq :: [Parser a] -> Parser [a]
+pseq ps = foldr (concWith (:)) (pure []) ps
+
+seqp2 :: (a -> b -> z)           -> Parser a -> Parser b -> Parser z
+seqp2 f pa pb = do
+  a <- pa
+  b <- pb
+  return $ f a b
+
+seqp3 :: (a -> b -> c -> z)      -> Parser a -> Parser b -> Parser c -> Parser z
+seqp3 f pa pb pc = do
+  a <- pa
+  b <- pb
+  c <- pc
+  return $ f a b c
+
+seqp4 :: (a -> b -> c -> d -> z) -> Parser a -> Parser b -> Parser c -> Parser d -> Parser z
+seqp4 f pa pb pc pd = do
+  a <- pa
+  b <- pb
+  c <- pc
+  d <- pd
+  return $ f a b c d
+
+seqp5 :: (a -> b -> c -> d -> e -> z) -> Parser a -> Parser b -> Parser c -> Parser d -> Parser e ->Parser z
+seqp5 f pa pb pc pd pe = do
+  a <- pa
+  b <- pb
+  c <- pc
+  d <- pd
+  e <- pe
+  return $ f a b c d e
