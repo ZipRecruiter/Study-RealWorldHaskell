@@ -104,6 +104,14 @@ optional p = (fmap Just p) `orElse` pure Nothing
 assert :: (String -> Bool) -> Parser ()
 assert f = P $ \s -> if f s then return (s, ()) else Nothing
 
+-- gather the result of parser p, and return it if the predicate pred likes it,
+-- otherwise fail
+sideCondition :: Parser a -> (a -> Bool) -> Parser a
+p `sideCondition` pred = do
+  v <- p
+  if pred v then return v else fails
+
+
 -- Just like p, except that if p fails, yield v instead
 def :: a -> Parser a -> Parser a
 def v p = p `orElse` pure v
