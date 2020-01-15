@@ -71,12 +71,20 @@ charser c = P $ \s -> if s == "" || head s /= c then Nothing
 -- charclass "blah" is a Parser Char that matches any of a, b, h, l.
 charclass s = alternatives $ map charser s
 
--- token "blah" is a Parser String that matches as many
+-- tokenE "blah" is a Parser String that matches as many
 -- a, b, h, l characters as possible and then stops
 -- empty token allowed
-tokenE = star . charclass
+-- tokenE = star . charclass
+tokenE :: String -> Parser String
+tokenE cc = P $ \s ->
+  Just (dropWhile (`elem` cc) s,
+        takeWhile (`elem` cc) s)
+
+
 -- empty token not allowed
-token = plus . charclass
+token :: String -> Parser String
+token cc = (tokenE cc) `sideCondition` (not . null)
+
 
 _ `startsWith` "" = True
 "" `startsWith` _  = False
