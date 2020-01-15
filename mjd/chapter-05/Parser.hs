@@ -1,7 +1,7 @@
 module Parser
     (
       Parser
-    , andThen
+    , andThen, andThen_
     , orElse, alternatives
     , lit, charser, token, tokenE, charclass, ws
     , fails
@@ -44,10 +44,16 @@ instance Monad Parser where
       Nothing -> Nothing
       Just (s2, v1) -> app (f v1) s2
 
--- pa `andThen` pb = pa >>= (\x -> fmap ((,) x) pb)
-
+-- look for a, followed by b, possibly ignoring white space in between
 andThen :: Parser a -> Parser b -> Parser (a, b)
 pa `andThen` pb = do
+  v1 <- pa
+  _  <- ws
+  v2 <- pb
+  return (v1, v2)
+
+andThen_ :: Parser a -> Parser b -> Parser (a, b)
+pa `andThen_` pb = do
   v1 <- pa
   v2 <- pb
   return (v1, v2)
@@ -141,31 +147,31 @@ pseq ps = foldr (concWith (:)) (pure []) ps
 
 seqp2 :: (a -> b -> z)           -> Parser a -> Parser b -> Parser z
 seqp2 f pa pb = do
-  a <- pa
+  a <- pa; _ <- ws
   b <- pb
   return $ f a b
 
 seqp3 :: (a -> b -> c -> z)      -> Parser a -> Parser b -> Parser c -> Parser z
 seqp3 f pa pb pc = do
-  a <- pa
-  b <- pb
+  a <- pa; _ <- ws
+  b <- pb; _ <- ws
   c <- pc
   return $ f a b c
 
 seqp4 :: (a -> b -> c -> d -> z) -> Parser a -> Parser b -> Parser c -> Parser d -> Parser z
 seqp4 f pa pb pc pd = do
-  a <- pa
-  b <- pb
-  c <- pc
+  a <- pa; _ <- ws
+  b <- pb; _ <- ws
+  c <- pc; _ <- ws
   d <- pd
   return $ f a b c d
 
 seqp5 :: (a -> b -> c -> d -> e -> z) -> Parser a -> Parser b -> Parser c -> Parser d -> Parser e ->Parser z
 seqp5 f pa pb pc pd pe = do
-  a <- pa
-  b <- pb
-  c <- pc
-  d <- pd
+  a <- pa; _ <- ws
+  b <- pb; _ <- ws
+  c <- pc; _ <- ws
+  d <- pd; _ <- ws
   e <- pe
   return $ f a b c d e
 
