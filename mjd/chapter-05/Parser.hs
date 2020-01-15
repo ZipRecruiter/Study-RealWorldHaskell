@@ -3,7 +3,7 @@ module Parser
       Parser
     , andThen
     , orElse, alternatives
-    , lit, charser, token, tokenE,
+    , lit, charser, token, tokenE, charclass, ws
     , fails
     , concWith
     , pseq
@@ -59,6 +59,9 @@ charser c = P $ \s -> if s == "" || head s /= c then Nothing
                       else return (tail s, c)
 -- charser c = lit [c]
 
+-- charclass "blah" is a Parser Char that matches any of a, b, h, l.
+charclass s = alternatives $ map charser s
+
 -- token "blah" is a Parser String that matches as many
 -- a, b, h, l characters as possible and then stops
 -- empty token allowed
@@ -113,6 +116,8 @@ b `after` a = fmap snd (a `andThen` b)
 between :: Parser xx -> Parser a -> Parser yy -> Parser a
 between p x q = (x `before` q) `after` p
 
+ws = tokenE " \t\n"
+spacy p = enclosed_by ws p
 
 eof :: Parser ()
 eof = assert null
