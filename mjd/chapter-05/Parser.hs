@@ -11,6 +11,7 @@ module Parser
     , assert
     , def
     , star, plus
+    , (<|>)
     , eof
     , before, after
     , app -- Not really
@@ -118,6 +119,10 @@ between p x q = (x `before` q) `after` p
 
 ws = tokenE " \t\n"
 spacy p = enclosed_by ws p
+
+-- like parser p, but transform the result value with f
+(<|>) :: Parser a -> (a -> b) -> Parser b
+p <|> f = fmap f p
 
 eof :: Parser ()
 eof = assert null
