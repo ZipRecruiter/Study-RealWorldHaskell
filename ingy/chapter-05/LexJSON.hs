@@ -24,8 +24,7 @@ lexJSON xs
     JTokenNull  : (lexJSON $ drop 4 xs)
   | c == '"' =
     JTokenString str : lexJSON afterStr
-  | (c == '-' && (isDigit c' || c' == '.' && isDigit c'')) ||
-    (isDigit c || c == '.' && isDigit c') =
+  | (c `elem` "-.0123456789") =
     JTokenNumber num : lexJSON afterNum
   | otherwise = error $ "Found unexpected char '" ++ c:"' lexing JSON"
   where
@@ -74,3 +73,5 @@ lexNumber xs = (string, rest)
     | otherwise = ""
   getDecimal :: String -> String
   getDecimal = takeWhile isDigit
+
+is1'9 = (`elem` ['1'..'9'])

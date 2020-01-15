@@ -31,6 +31,9 @@ json-test-suite:
 test: test-lexer test-parser
 	@echo
 
+test-unit: json-parser
+	printf '["x",]' | ./$< || true
+
 test-lexer: json-lexer
 	@echo
 	@echo "===== json-lexer tests ========================================"

@@ -28,14 +28,20 @@ parseJSONArray ts = (JArray values, ts')
 
 parseJSONList :: [JToken] -> ([JValue], [JToken])
 parseJSONList (JTokenArrayEnd:ts) = ([], ts)
-parseJSONList (JTokenListSep:ts) = makeValues ts
-parseJSONList ts = makeValues ts
-
-makeValues :: [JToken] -> ([JValue], [JToken])
-makeValues ts = (value:values, ts')
+parseJSONList ts = (value:sep ++ values, ts')
   where
+  (sep, ts''') = checkSep JTokenArrayEnd ts''
   (value, ts'') = parseJSONValue ts
-  (values, ts') = parseJSONList ts''
+  (values, ts') = parseJSONList ts'''
+
+checkSep :: JToken -> [JToken] -> ([JValue], [JToken])
+checkSep end (t:ts)
+  | t == JTokenListSep =
+    if length ts > 0 && head ts == end
+    then error "Trailing comma not allowed in array"
+    else ([], ts)
+  | t == end = ([], t:ts)
+  | otherwise = error "Expecting ',' or ']' parsing array"
 
 -- Object functions:
 parseJSONObject :: [JToken] -> (JValue, [JToken])
