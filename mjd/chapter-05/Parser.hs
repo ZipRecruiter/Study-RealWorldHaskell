@@ -15,7 +15,7 @@ module Parser
     , eof
     , before, after, between, enclosed_by, spacy
     , delimitedList
-    , app -- Not really
+    , run
     )
 
 where
@@ -25,6 +25,7 @@ where
 data Parser a = P (String -> Maybe (String, a))
 
 app (P f) s = f s
+run = app
 
 instance Functor Parser where
   fmap f (P p) = P $ \s -> (fmap . fmap) f (p s)
