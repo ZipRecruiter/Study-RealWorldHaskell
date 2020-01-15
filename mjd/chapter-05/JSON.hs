@@ -1,9 +1,14 @@
 
+module JSON (json_value,
+             is_valid_json
+            ) where
 
 import Parser
 import SimpleJSON
+import Data.Maybe (isJust)
 
 digits = token ['0' .. '9']
+optionalDigits = tokenE ['0' .. '9']
 
 sign :: Num a => Parser a
 sign = fmap signFactor $ optional $ charclass "+-"
@@ -24,9 +29,7 @@ jintP = intP <|> JNumber
 doubleP :: (Read a, Floating a) => Parser a
 doubleP = do
   sf <- sign
-  digit_and_point <- seqStrings [        lit ".", digits] `orElse`
-                     seqStrings [digits, lit ".", digits] `orElse`
-                     seqStrings [digits, lit "." ]
+  digit_and_point <- (seqStrings [optionalDigits, lit ".", optionalDigits ] ) `sideCondition` (/= ".")
   exponent <- (intP `after` charclass "Ee") `orElse` pure 0
   return $ sf * (read $ '0' : digit_and_point ++ "0") * (10 ** exponent)
 
@@ -51,7 +54,7 @@ non_special_char = charclass $ ['A' .. 'Z'] ++ [ 'a' .. 'z' ] ++ [ '0' .. '9' ]
 escaped_special_char = (charclass (fst escs) `after` backslash) <|> esc_lookup
 
 stringP :: Parser String
-stringP = enclosed_by dquote contents `orElse` enclosed_by squote contents
+stringP = enclosed_by dquote contents
   where contents = star (non_special_char `orElse` escaped_special_char)
 
 jstringP = stringP <|> JString
@@ -59,17 +62,23 @@ jstringP = stringP <|> JString
 valueP :: Parser JValue
 valueP = alternatives [ jstringP, jdoubleP, objectP, boolP, arrayP, nullP, jintP ]
 
+json_value :: String -> Maybe JValue
+json_value s = fmap snd $ run (valueP `before` eof) s
+
+is_valid_json :: String -> Bool
+is_valid_json = isJust . json_value
+
 keyPairP :: Parser (String, JValue)
-keyPairP = seqp5 (\k _ _ _ v -> (k, v))  stringP ws (charser ':') ws valueP
+keyPairP = seqp3 (\k _ v -> (k, v))  stringP (charser ':') valueP
 
 objectP :: Parser JValue
-objectP = between (charser '{' `before` ws)
-          (delimitedList (charser ',' `before` ws) keyPairP)
-          (charser '}' `after` ws)       <|> JObject
+objectP = between (charser '{')
+          (delimitedList (charser ',') keyPairP)
+          (charser '}')       <|> JObject
 
 arrayP :: Parser JValue
-arrayP = between (charser '[' `andThen` ws)
-          (delimitedList (enclosed_by ws $ charser ',') valueP)
+arrayP = between (charser '[')
+          (delimitedList (charser ',') valueP)
           (charser ']')       <|> JArray
 
 boolP = (lit "true" <|> const (JBool True))

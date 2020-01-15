@@ -8,7 +8,7 @@ module Parser
     , concWith, seqStrings
     , pseq, seqp2, seqp3, seqp4, seqp5
     , optional
-    , assert
+    , assert, sideCondition
     , def
     , star, plus
     , (<|>)
@@ -63,6 +63,8 @@ pa `orElse` pb = P $
                          res@(Just _) -> res
 
 alternatives ls = foldr orElse fails ls
+
+
 
 charser c = P $ \s -> if s == "" || head s /= c then Nothing
                       else return (tail s, c)
