@@ -59,19 +59,28 @@ lexNumber xs = (string, rest)
   where
   string = takeNumber xs
   rest = drop (length string) xs
+
   takeNumber :: String -> String
-  takeNumber ('-':x:xs)
-    | x == '.' = '-' : '.': getDecimal xs
-    | isDigit x = '-' : getNumber (x:xs)
-    | otherwise = error "Invalid char '" ++ x:"' after '-'"
+  takeNumber ('-':"") = error "Error lexing number"
+  takeNumber ('-':xs) = '-':getNumber xs
   takeNumber xs = getNumber xs
+
   getNumber :: String -> String
-  getNumber "" = ""
-  getNumber ('.':xs) = '.' : getDecimal xs
-  getNumber (x:xs)
-    | isDigit x = x : getNumber xs
+  getNumber xs
+    | a == '.' = a : (getDecimal $ tail xs)
+    | a `elem` "eE" = a : (getExponent $ tail xs)
+    | a == '0' && isDigit b = error "Number can't start with 0"
+    | isDigit a = a : (getNumber $ tail xs)
     | otherwise = ""
+    where (a:b:_) = xs ++ "  "
+
   getDecimal :: String -> String
   getDecimal = takeWhile isDigit
+
+  getExponent :: String -> String
+  getExponent xs
+    | a `elem` "+-" || isDigit a = a : (takeWhile isDigit $ tail xs)
+    | otherwise = error "Error parsing exponent of number"
+    where (a:_) = xs ++ " "
 
 is1'9 = (`elem` ['1'..'9'])

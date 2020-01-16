@@ -11,7 +11,7 @@ programs := \
     testmain \
     json-lexer \
     json-parser \
-    json-printer
+    json-printer \
 
 run: testmain
 	./$<
@@ -20,7 +20,7 @@ run: testmain
 	ghc $<
 
 clean:
-	rm -f *.hi *.o $(programs)
+	rm -f *.hi *.o $(programs) out
 	rm -fr json-test-suite
 
 test-suite: json-parser json-test-suite
@@ -32,8 +32,8 @@ json-test-suite:
 test: test-lexer test-parser test-printer
 	@echo
 
-test-unit: json-parser
-	printf '[-01]' | ./$< || true
+test-unit: json-lexer
+	printf '[1, 0e+1]\n' | ./$< || true
 
 test-lexer: json-lexer
 	@echo
