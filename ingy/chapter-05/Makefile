@@ -10,7 +10,8 @@
 programs := \
     testmain \
     json-lexer \
-    json-parser
+    json-parser \
+    json-printer
 
 run: testmain
 	./$<
@@ -28,11 +29,11 @@ test-suite: json-parser json-test-suite
 json-test-suite:
 	git worktree add -f $@ $@
 
-test: test-lexer test-parser
+test: test-lexer test-parser test-printer
 	@echo
 
 test-unit: json-parser
-	printf '["x",]' | ./$< || true
+	printf '[-01]' | ./$< || true
 
 test-lexer: json-lexer
 	@echo
@@ -74,3 +75,10 @@ test-parser: json-parser
 	@echo
 	@echo "* Error: unended array"
 	printf '{"foo":[123,}' | ./$< || true
+
+test-printer: json-printer
+	@echo
+	@echo "===== json-parser tests ======================================="
+	@echo
+	@echo "* Array of possible value types:"
+	printf '[{},[],"",-5,1.2,true,false,null]' | ./$<

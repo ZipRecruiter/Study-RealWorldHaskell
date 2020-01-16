@@ -3,4 +3,5 @@
 /testmain
 /json-lexer
 /json-parser
+/json-printer
 /json-test-suite/
