@@ -5,6 +5,8 @@ import TokenJSON
 
 import Data.Char (isDigit)
 
+err = errorWithoutStackTrace
+
 lexJSON :: String -> [JToken]
 lexJSON "" = []
 lexJSON ('{':xs)  = JTokenObjectStart : lexJSON xs
@@ -26,7 +28,7 @@ lexJSON xs
     JTokenString str : lexJSON afterStr
   | (c `elem` "-.0123456789") =
     JTokenNumber num : lexJSON afterNum
-  | otherwise = error $ "Found unexpected char '" ++ c:"' lexing JSON"
+  | otherwise = err $ "Found unexpected char '" ++ c:"' lexing JSON"
   where
     c = head xs
     c' =
@@ -46,9 +48,9 @@ lexString xs = (init string, rest)
   string = takeString xs
   rest = drop (length string) xs
   takeString :: String -> String
-  takeString "" = error "End of stream lexing a string"
-  takeString ('\n':_) = error "End of line lexing a string"
-  takeString ('\t':_) = error "Unescaped tab lexing a string"
+  takeString "" = err "End of stream lexing a string"
+  takeString ('\n':_) = err "End of line lexing a string"
+  takeString ('\t':_) = err "Unescaped tab lexing a string"
   takeString ys
     | a == '"' = a:""
     | a == '\\' && b `elem` "\"\\/bfnrt" =
@@ -57,9 +59,9 @@ lexString xs = (init string, rest)
       isHex c && isHex d && isHex e && isHex f =
         (take 6 ys) ++ (takeString $ drop 6 ys)
     | a == '\\' =
-      error $ "Invalid escape char '" ++ b:"' in string"
+      err $ "Invalid escape char '" ++ b:"' in string"
     | a `elem` ['\0'..'\31'] =
-      error "Unescaped control character while parsing string"
+      err "Unescaped control character while parsing string"
     | otherwise =
       a:(takeString $ tail ys)
     where (a:b:c:d:e:f:_) = ys ++ "      "
@@ -71,7 +73,7 @@ lexNumber xs = (string, rest)
   rest = drop (length string) xs
 
   takeNumber :: String -> String
-  takeNumber ('-':"") = error "Error lexing number"
+  takeNumber ('-':"") = err "Error lexing number"
   takeNumber ('-':xs) = '-':getNumber xs
   takeNumber xs = getNumber xs
 
@@ -79,7 +81,7 @@ lexNumber xs = (string, rest)
   getNumber xs
     | a == '.' = a : (getDecimal $ tail xs)
     | a `elem` "eE" = a : (getExponent $ tail xs)
-    | a == '0' && isDigit b = error "Number can't start with 0"
+    | a == '0' && isDigit b = err "Number can't start with 0"
     | isDigit a = a : (getNumber $ tail xs)
     | otherwise = ""
     where (a:b:_) = xs ++ "  "
@@ -94,7 +96,7 @@ lexNumber xs = (string, rest)
   getExponent :: String -> String
   getExponent xs
     | a `elem` "+-" || isDigit a = a : (takeWhile isDigit $ tail xs)
-    | otherwise = error "Error parsing exponent of number"
+    | otherwise = err "Error parsing exponent of number"
     where (a:_) = xs ++ " "
 
 isHex = (`elem` "0123456789abcdefABCDEF")

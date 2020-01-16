@@ -3,15 +3,17 @@ module ParseJSON (parseJSON) where
 import TokenJSON
 import SimpleJSON
 
+err = errorWithoutStackTrace
+
 parseJSON :: [JToken] -> JValue
 parseJSON ts
   | null ts' = value
-  | otherwise = error "Found tokens after parsing a JSON value"
+  | otherwise = err "Found tokens after parsing a JSON value"
   where (value, ts') = parseJSONValue ts
 
 parseJSONValue :: [JToken] -> (JValue, [JToken])
 parseJSONValue [] =
-  error "End of tokens before parse finished"
+  err "End of tokens before parse finished"
 parseJSONValue (JTokenArrayStart:ts) = parseJSONArray ts
 parseJSONValue (JTokenObjectStart:ts) = parseJSONObject ts
 parseJSONValue ((JTokenString s):ts) = (JString s, ts)
@@ -19,7 +21,7 @@ parseJSONValue ((JTokenNumber n):ts) = ((JNumber (read n :: Double)), ts)
 parseJSONValue (JTokenTrue:ts) = (JBool True, ts)
 parseJSONValue (JTokenFalse:ts) = (JBool False, ts)
 parseJSONValue (JTokenNull:ts) = (JNull, ts)
-parseJSONValue _ = error "Unexpected token parsing JSON value"
+parseJSONValue _ = err "Unexpected token parsing JSON value"
 
 -- Array functions:
 parseJSONArray :: [JToken] -> (JValue, [JToken])
@@ -38,10 +40,10 @@ checkSep :: JToken -> [JToken] -> ([JValue], [JToken])
 checkSep end (t:ts)
   | t == JTokenListSep =
     if length ts > 0 && head ts == end
-    then error "Trailing comma not allowed in array"
+    then err "Trailing comma not allowed in array"
     else ([], ts)
   | t == end = ([], t:ts)
-  | otherwise = error "Expecting ',' or ']' parsing array"
+  | otherwise = err "Expecting ',' or ']' parsing array"
 
 -- Object functions:
 parseJSONObject :: [JToken] -> (JValue, [JToken])
@@ -56,9 +58,9 @@ parseJSONPairs ((JTokenString s):JTokenPairSep:ts) =
 parseJSONPairs (JTokenListSep:(JTokenString s):JTokenPairSep:ts) =
   makePairs s ts
 parseJSONPairs (JTokenListSep:JTokenObjectEnd:_) =
-  error "Trailing comma not allowed in JSON object"
+  err "Trailing comma not allowed in JSON object"
 parseJSONPairs _ =
-  error "Invalid or missing token while parsing object"
+  err "Invalid or missing token while parsing object"
 
 makePairs :: String -> [JToken] -> ([(String, JValue)], [JToken])
 makePairs s ts = (pair:pairs, ts')
