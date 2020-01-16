@@ -4,6 +4,7 @@ set -eu -o pipefail
 
 i=0
 for t in json-test-suite/*.json; do
+  # echo "# $t"
   n=${t#*/}
   n=${n%.json}
 

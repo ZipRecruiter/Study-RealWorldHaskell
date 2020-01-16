@@ -33,7 +33,7 @@ test: test-lexer test-parser test-printer
 	@echo
 
 test-unit: json-lexer
-	printf '[1, 0e+1]\n' | ./$< || true
+	printf '["\x00"]\n' | ./$< || true
 
 test-lexer: json-lexer
 	@echo

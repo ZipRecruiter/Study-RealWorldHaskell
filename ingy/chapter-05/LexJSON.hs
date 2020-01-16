@@ -48,11 +48,21 @@ lexString xs = (init string, rest)
   takeString :: String -> String
   takeString "" = error "End of stream lexing a string"
   takeString ('\n':_) = error "End of line lexing a string"
-  takeString ('\\':'"':ys) = '\\' : '"' : takeString ys
-  takeString (y:ys) =
-    if y == '"'
-    then y:""
-    else y: takeString ys
+  takeString ('\t':_) = error "Unescaped tab lexing a string"
+  takeString ys
+    | a == '"' = a:""
+    | a == '\\' && b `elem` "\"\\/bfnrt" =
+      a:b:(takeString $ drop 2 ys)
+    | a == '\\' && b == 'u' &&
+      isHex c && isHex d && isHex e && isHex f =
+        (take 6 ys) ++ (takeString $ drop 6 ys)
+    | a == '\\' =
+      error $ "Invalid escape char '" ++ b:"' in string"
+    | a `elem` ['\0'..'\31'] =
+      error "Unescaped control character while parsing string"
+    | otherwise =
+      a:(takeString $ tail ys)
+    where (a:b:c:d:e:f:_) = ys ++ "      "
 
 lexNumber :: String -> (String, String)
 lexNumber xs = (string, rest)
@@ -75,7 +85,11 @@ lexNumber xs = (string, rest)
     where (a:b:_) = xs ++ "  "
 
   getDecimal :: String -> String
-  getDecimal = takeWhile isDigit
+  getDecimal xs
+    | a `elem` "eE" = a : (getExponent $ tail xs)
+    | isDigit a = a : (getDecimal $ tail xs)
+    | otherwise = ""
+    where (a:_) = xs ++ " "
 
   getExponent :: String -> String
   getExponent xs
@@ -83,4 +97,4 @@ lexNumber xs = (string, rest)
     | otherwise = error "Error parsing exponent of number"
     where (a:_) = xs ++ " "
 
-is1'9 = (`elem` ['1'..'9'])
+isHex = (`elem` "0123456789abcdefABCDEF")
