@@ -1,18 +1,9 @@
-SUBMODULES := dnmfarrell
-SUBMODULES := $(SUBMODULES:%=%/.git)
-
 default:
 
-force:
-
-pull: $(SUBMODULES)
+pull: dnmfarrell
 	git pull --rebase
-	git submodule update --recursive --remote
-	git submodule update
+	(cd dnmfarrell && git pull --rebase)
 
-$(SUBMODULES): force
-	git submodule init -- $(@:%.git=%)
-	git submodule update -- $(@:%.git=%)
+dnmfarrell:
+	git clone git@github.com:dnmfarrell/Real-World-Haskell $@
 
-clean:
-	git submodule deinit --all
