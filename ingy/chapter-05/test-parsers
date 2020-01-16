@@ -17,7 +17,6 @@ echo "Testing input '$input':"
   [[ -e json-parser ]] || {
     cat <<... > json-parser.hs
 import ParseJSON
-import Control.Monad
 main = do
   interact $ show.parseJSON
   putStrLn ""
@@ -39,9 +38,6 @@ main = do
   echo
   echo "tonyo:"
   cd tonyo/ch5
-  [[ -e json-main ]] || ghc -isrc json-main.hs &> /dev/null
-  f=$(mktemp)
-  printf "%s" "$input" > "$f"
-  ./json-main "$f" || true
-  rm "$f"
+  [[ -e json-main-noio ]] || ghc -isrc json-main-noio.hs &> /dev/null
+  printf "%s" "$input" | ./json-main-noio && echo || true
 )
