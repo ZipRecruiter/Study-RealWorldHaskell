@@ -8,36 +8,35 @@ cd "$root"
 
 input=$(cat)
 
-echo "Testing input '$input':"
 (
-  [[ -d dnmfarrell ]] || make pull &> /dev/null || true
-  echo
-  echo "dnmfarrell:"
-  cd dnmfarrell/5
-  [[ -e json-parser ]] || {
-    cat <<... > json-parser.hs
+  echo "Testing input '$input':"
+  (
+    [[ -d dnmfarrell ]] || make pull &> /dev/null || true
+    echo "===== dnmfarrell:"
+    cd dnmfarrell/5
+    [[ -e json-parser ]] || {
+      cat <<... > json-parser.hs
 import ParseJSON
 main = do
   interact $ show.parseJSON
   putStrLn ""
 ...
-    ghc json-parser.hs &> /dev/null
-  }
-  printf "%s" "$input" | ./json-parser || true
-)
+      ghc json-parser.hs &> /dev/null
+    }
+    printf "%s" "$input" | ./json-parser || true
+  )
 
-(
-  echo
-  echo "ingy:"
-  cd ingy/chapter-05
-  [[ -e json-parser ]] || make json-parser &> /dev/null
-  printf "%s" "$input" | ./json-parser || true
-)
+  (
+    echo "===== ingy:"
+    cd ingy/chapter-05
+    [[ -e json-parser ]] || make json-parser &> /dev/null
+    printf "%s" "$input" | ./json-parser || true
+  )
 
-(
-  echo
-  echo "tonyo:"
-  cd tonyo/ch5
-  [[ -e json-main-noio ]] || ghc -isrc json-main-noio.hs &> /dev/null
-  printf "%s" "$input" | ./json-main-noio && echo || true
-)
+  (
+    echo "===== tonyo:"
+    cd tonyo/ch5
+    [[ -e json-main-noio ]] || ghc -isrc json-main-noio.hs &> /dev/null
+    printf "%s" "$input" | ./json-main-noio && echo || true
+  )
+) |& grep -Ev '^\s*$'
