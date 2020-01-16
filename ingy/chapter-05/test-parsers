@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -e
+
+root=$(cd "$(dirname "$0")/../.." && pwd)
+
+cd "$root"
+
+input=$(cat)
+
+printf "%s" "$input" > x
+
+echo "Testing input '$input':"
+(
+  echo
+  echo "ingy:"
+  cd ingy/chapter-05
+  [[ -e json-parser ]] || make json-parser &> /dev/null
+  printf "%s" "$input" | ./json-parser || true
+)
+
+(
+  echo
+  echo "tonyo:"
+  cd tonyo/ch5
+  [[ -e json-main ]] || ghc -isrc json-main.hs &> /dev/null
+  f=$(mktemp)
+  printf "%s" "$input" > "$f"
+  ./json-main "$f" || true
+  rm "$f"
+)
