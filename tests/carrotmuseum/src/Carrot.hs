@@ -16,9 +16,9 @@ carrotReq fn = do
   let hu = if (take 29 fn) == "http://www.carrotmuseum.co.uk"
            then drop 29 fn
            else fn
-      fp = if hu == "/"
+      fp = if hu == "/" || hu == ""
            then "./www/index.html"
-           else "./www/"
+           else "./www/" ++ hu
   fc <- try (readFile fp)
   case fc of
     Left  e -> return $ Carrot 404 (show (e :: SomeException))
