@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mr Carrot Head</title>
+<link rel="stylesheet" type="text/css" href="http://carrotmuseum.co.uk/style.css" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta content="text/html; charset=utf-8" http-equiv="content-type" />
+<link rel="SHORTCUT ICON" href="http://carrotmuseum.co.uk/favicx.ico" />
+<meta name="Face Maker Mr Carrot head" />
+<meta name="Description" content="Make a carrot face" />
+<title>Mr Carrot Head</title>
+
+<style type="text/css">
+/*<![CDATA[*/
+
+body{width:1100px;margin: 0 auto;text-align:center;background:#ffffc0}
+
+#main{margin-top:20px}
+
+#leftdiv{width:320px;float:left}
+
+#middiv{width:380px;float:left;}
+
+#rightdiv{width:340px;float:left}
+
+#main div{border:1px solid red;height:500px}
+
+#thelink{float:right}
+
+#carrot{top:80px;position: relative;z-index:-10;}
+
+.drag {
+
+        z-index:auto;
+
+        position: relative; 
+
+        cursor:hand;
+
+}
+
+/*]]>*/
+</style>
+
+<style type="text/css">
+/*<![CDATA[*/
+body { margin-top: 0px; margin-right: 2px; margin-bottom: 0px; margin-left: 5px;}
+   
+/*]]>*/
+</style>
+</head>
+<body>
+./facemaker.html <script type="text/javascript">
+//<![CDATA[
+
+//Alerts to errors.
+
+window.onerror=function(msg, url, linenumber){var logerror='Error message: ' + msg + '. Url: ' + url + 'Line Number: ' + linenumber;alert(logerror);return false}
+
+//]]>
+</script><script language="JavaScript" type="text/javascript">
+//<![CDATA[
+
+<!--
+
+function $(id){
+
+        return document.getElementById(id);
+
+}
+
+
+
+var _startX = 0;                        // mouse starting positions
+
+var _startY = 0;
+
+var _offsetX = 0;                       // current element offset
+
+var _offsetY = 0;
+
+var _dragElement;                       // needs to be passed from OnMouseDown to OnMouseMove
+
+var _oldZIndex = 0;                     // we temporarily increase the z-index during drag
+
+var _debug = $('debug');        // makes life easier
+
+
+
+
+
+
+
+
+
+function InitDragDrop()
+
+{
+
+        document.onmousedown = OnMouseDown;
+
+        document.onmouseup = OnMouseUp;
+
+}
+
+
+
+function OnMouseDown(e){        
+
+        if (e == null) 
+
+                e = window.event; 
+
+                
+
+        var target =  e.target != null ? e.target : e.srcElement;
+
+                
+
+        if ((e.button == 1 && window.event != null || e.button == 0) && target.className == 'drag')     {
+
+                _startX = e.clientX;
+
+                _startY = e.clientY;
+
+                
+
+                _offsetX = ExtractNumber(target.style.left);
+
+                _offsetY = ExtractNumber(target.style.top);     
+
+                
+
+                _oldZIndex = target.style.zIndex;
+
+                target.style.zIndex = 10000;            
+
+                _dragElement = target;  
+
+                
+
+                document.onmousemove = OnMouseMove;
+
+                
+
+                document.body.focus();
+
+                
+
+                document.onselectstart = function () { return false; };
+
+                
+
+                target.ondragstart = function() { return false; };
+
+                
+
+                return false;
+
+        }
+
+}
+
+
+
+function ExtractNumber(value)
+
+{
+
+        var n = parseInt(value);
+
+        
+
+        return n == null || isNaN(n) ? 0 : n;
+
+}
+
+
+
+function OnMouseMove(e)
+
+{
+
+        if (e == null) 
+
+                var e = window.event; 
+
+
+
+        // this is the actual "drag code"
+
+        _dragElement.style.left = (_offsetX + e.clientX - _startX) + 'px';
+
+        _dragElement.style.top = (_offsetY + e.clientY - _startY) + 'px';
+
+        
+
+}
+
+
+
+function OnMouseUp(e)
+
+{
+
+        
+
+        if (_dragElement != null)       {
+
+                _dragElement.style.zIndex = _oldZIndex;
+
+
+
+                // we're done with these events until the next OnMouseDown
+
+                document.onmousemove = null;
+
+                document.onselectstart = null;
+
+                _dragElement.ondragstart = null;
+
+
+
+                // this is how we know we're not dragging
+
+                _dragElement = null;            
+
+        }
+
+}
+
+//]]>
+</script>
+<h1 align="center"><font face="Arial"><span style="font-weight: 400">Make Mr Carrot Head</span></font></h1>
+<center><font face="Arial"><a href="history.html">History</a> <a href="wild.html">Wild Carrot</a> <a href="today.html">Today</a> <a href="nutrition.html">Nutrition</a> <a href="cultivation.html">Cultivation</a> <a href="recipes.html">Recipes</a> <a href="trivia.html">Trivia</a> <a href="links.html">Links</a> <a href="index.html">Home</a> <a href="contactinfo.html">Contact</a></font>
+<p><span class="fixedsm"><img src="photos/logo1.jpg" style="width:600px;height:150px" alt="World Carrot Museum - Main Carrots Logo" /><br />
+<br />
+&nbsp;<font size="5" face="Arial" color="#0000FF">The World Carrot Museum Facemaker</font></span></p>
+<p><b><span class="fixedsm"><font face="Arial" size="5" color="#FF0000">PLEASE NOTE THIS DOES NOT WORK ON TOUCH SCREEN DEVICES - Sorry!</font></span></b></p>
+<p><span class="fixedsm"><font face="Arial" size="2">Simply drag the face pieces on to Mr (or Mrs) Carrot. If you wish to retain your image you must press "Alt" and "Print Screen" then paste the image into Word or your favourite paint program, then cut out the face you have made. Press refresh to start again <a href="index.html">Click here to return to Carrot Museum</a>.</font></span></p>
+<div id="main">
+<div id="leftdiv"><span class="fixedsm"><img class="drag" style="width:40px;height:43px" src="face/long_nose.gif" /> <img class="drag" src="face/nose7.gif" style="width:29px;height:46px" /> <img class="drag" style="width:34px;height:23" src="face/blinking_eyes.gif" /> <img class="drag" src="face/nose4.gif" style="width:35px;height:35px" /> <img class="drag" src="face/nose3.gif" style="width:35px;height:35px" /> <img class="drag" style="width:100px;height:100px" src="face/blonde_hair.gif" /> <img class="drag" src="face/hair4.gif" style="width:40px;height:40px" /> <img class="drag" src="face/flower.gif" style="width:23px;height:23px" /> <img class="drag" src="face/leftarm.gif" style="width:35px;height:50px" /> <img class="drag" src="face/rightarm.gif" style="width:35px;height:50px" /> <img class="drag" style="width:74px;height:36px" src="face/bow_tie.gif" /> <img class="drag" style="width:74px;height:36px" src="face/bow_tie2.gif" /> <img class="drag" style="width:37px;height:48px" src="face/nose.gif" /> <img class="drag" style="width:44px;height:52" src="face/round_nose.gif" /> <img class="drag" style="width:66px;height:28px" src="face/purple_feet.gif" /> <img class="drag" style="width:71px;height:27px" src="face/glasses.gif" /> <img class="drag" src="face/leftarm1.gif" style="width:35px;height:50px" /> <img class="drag" src="face/rightarm1.gif" style="width:35px;height:50px" /> <img class="drag" src="face/glasses3.gif" style="width:75px;height:35px" /> <img class="drag" style="width:76px;height:34px" src="face/glasses2.gif" /> <img class="drag" src="face/eye1.gif" style="width:40px;height:40px" /> <img class="drag" src="face/eye11.gif" style="width:40px;height:40px" /> <img class="drag" src="face/brow1.gif" style="width:37px;height:22px" /> <img class="drag" src="face/brow12.gif" style="width:37px;height:22px" /> <img class="drag" src="face/brow2.gif" style="width:40px;height:23px" /> <img class="drag" src="face/brow21.gif" style="width:40px;height:23px" /> <img class="drag" src="face/brow3.gif" style="width:37px;height:22px" /> <img class="drag" src="face/brow31.gif" style="width:37px;height:22px" /> <img class="drag" src="face/brow4.gif" style="width:40px;height:12px" /> <img class="drag" src="face/brow41.gif" style="width:40px;height:12px" /> <img class="drag" src="face/eye5.gif" style="width:25px;height:40px" /> <img class="drag" src="face/eye51.gif" style="width:25px;height:40px" /> <img class="drag" style="width:26px;height:44px" src="face/right_ear.gif" /> <img class="drag" style="width:26px;height:44px" src="face/left_ear.gif" /> <img class="drag" src="face/pink_feet.gif" style="width:66px;height:28px" /></span></div>
+<div id="middiv"><span class="fixedsm"><img style="width:98px;height:300px" src="face/hugecarrot.gif" id="carrot" name="carrot" /></span>
+<p><span class="fixedsm">&nbsp;</span></p>
+</div>
+<div id="rightdiv"><span class="fixedsm"><img class="drag" src="face/black_hair.gif" style="width:100px;height:100px" /> <img class="drag" src="face/mouth1.gif" style="width:40px;height:60px" /> <img class="drag" style="width:42px;height:53px" src="face/open_mouth2.gif" /> <img class="drag" style="width:70px;height:31px" src="face/Stare_eyes.gif" /> <img class="drag" src="face/mouth2.gif" style="width:48px;height:20px" /> <img class="drag" style="width:67px;height:34" src="face/flirt_eyes.gif" /> <img class="drag" src="face/mouth8.gif" style="width:55px;height:37px" /> <img class="drag" src="face/sunglasses.gif" style="width:75px;height:35px" /> <img class="drag" src="face/ear41.gif" style="width:36px;height:53px" /> <img class="drag" src="face/ear4.gif" style="width:36px;height:53px" /> <img class="drag" src="face/ear31.gif" style="width:36px;height:47px" /> <img class="drag" src="face/ear3.gif" style="width:36px;height:47px" /> <img class="drag" src="face/must1.gif" style="width:40px;height:16px" /> <img class="drag" src="face/must11.gif" style="width:40px;height:16px" /> <img class="drag" style="width:92px;height:29px" src="face/tash.gif" /> <img class="drag" src="face/ear1.gif" style="width:36px;height:46px" /> <img class="drag" src="face/ear12.gif" style="width:36px;height:46px" /> <img class="drag" src="face/ear2.gif" style="width:36px;height:67" /> <img class="drag" src="face/ear21.gif" style="width:36px;height:67px" /> <img class="drag" style="width:48px;height:21px" src="face/eyes_360_sm_clr.gif" /> <img class="drag" src="face/hat2.gif" style="width:80px;height:47" /> <img class="drag" style="width:86px;height:60px" src="face/base_ball_cap.gif" /> <img class="drag" src="face/cartoon_top_hat.gif" style="width:109px;height:75px" /> <img class="drag" style="width:96px;height:44px" src="face/round_hat.gif" /> <img class="drag" src="face/hat3.gif" style="width:80px;height:51px" /></span></div>
+</div>
+<span class="fixedsm"><script type="text/javascript">
+//<![CDATA[
+InitDragDrop();
+//]]>
+</script></span> .</center>
+</body>
+</html>
