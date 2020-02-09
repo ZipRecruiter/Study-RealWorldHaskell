@@ -1,7 +1,6 @@
 import Control.Concurrent (forkIO, forkFinally, threadDelay)
 import Control.Concurrent.MVar
 import Control.Exception.Base (Exception, throw)
-import SemVar
 
 data MyException = MyException deriving Show
 instance Exception MyException
@@ -16,13 +15,6 @@ slow_add :: Num b => b -> b -> IO b
 slow_add a b = do
   threadDelay 2000000
   return $ a + b
-
-do_with_counter :: SemVar Int -> IO a -> IO a
-do_with_counter counter action = do
-  incrementSemVar counter
-  res <- action
-  decrementSemVar counter
-  return res
 
 get_or_rethrow :: Exception e => (Either e a) -> a
 get_or_rethrow (Left exc) = throw exc
