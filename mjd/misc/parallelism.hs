@@ -75,5 +75,5 @@ pmap f ls = in_parallel (map f ls)
 
 
 try_it = pmap example [1..12] >>= parallel_show where
-  example = \a -> do threadDelay (50000); return (a*11)
+  example = \a -> do threadDelay (50000*a*a); return (a*11)
   
