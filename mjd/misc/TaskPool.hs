@@ -128,10 +128,16 @@ slow_task name decisecs = do
   threadDelay (decisecs * 100000)
   print $ "Finished '" ++ name ++ "'"
 
+runtime i = (i*i) `mod` 10
+
 main = do 
   tp <- newTaskpool 2
-  start_task tp (slow_task "a" 5)
-  start_task tp (slow_task "b" 25)
-  start_task tp (slow_task "c" 15)
+  sequence_ $ map (start_task tp) $ map (\i -> slow_task (show i) (runtime i)) [1..]
+  -- start_task tp (slow_task "a" 20)
+  -- start_task tp (slow_task "b" 10)
+  -- start_task tp (slow_task "c" 5)
+  -- start_task tp (slow_task "d" 10)
+  -- start_task tp (slow_task "e" 5)
+  -- start_task tp (slow_task "f" 5)
   wait_for_completion tp
   print "******Exiting."
