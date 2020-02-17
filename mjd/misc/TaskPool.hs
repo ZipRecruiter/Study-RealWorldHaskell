@@ -31,8 +31,6 @@ data Taskpool = Taskpool {
   -- similarly this one is empty if no slots are allocated
   pool_empty :: MVar (),
 
-  -- Mutex controlling access to the taskpool's internals
-  semaphore :: MVar ()
   }
 
 newTaskpool :: Integer -> IO Taskpool
@@ -40,12 +38,10 @@ newTaskpool n = do
   rem  <- newMVar n
   full <- newMVar ()
   empty <- newEmptyMVar
-  sem  <- newMVar ()
   return $ Taskpool { n_slots = n,
                       n_remaining = rem,
                       pool_full = full,
                       pool_empty = empty,
-                      semaphore = sem }
 
 
 slots :: Taskpool -> IO (Integer, Integer)
@@ -82,27 +78,15 @@ wait_until_flag_set flag tp = do
 wait_until_flag_clear flag tp = do
   takeMVar (flag tp)
   
--- perform some action on a Taskpool,
--- acquiring the Taskpool's mutex first,
--- and releasing it afterward
-withTP :: String -> Taskpool -> IO a -> IO a
-withTP label tp action = action
-
-_withTP label tp action = do
-  takeMVar (semaphore tp)
-  z <- action
-  putMVar (semaphore tp) ()
-  return z
-
 -- release a task slot back into the pool
 release :: Taskpool -> IO ()
-release tp = withTP "release" tp $ do
+release tp = do
   free_slots <- takeMVar (n_remaining tp)
   putMVar (n_remaining tp) (free_slots + 1)
   force_set_state tp
   
 acquire :: Taskpool -> IO ()
-acquire tp = withTP "acquire" tp $ do
+acquire tp = do
   -- this can't complete until n_remaining is positive
   takeMVar (pool_full tp)
   
