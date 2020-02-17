@@ -4,6 +4,7 @@ import Control.Concurrent.MVar
 import Control.Exception.Base (Exception, throw)
 import Control.Monad
 import Data.Maybe (isJust)
+import Data.Time
 
 {-
   Idea: a taskpool has a controlled variable that counts how many more tasks
@@ -31,22 +32,30 @@ data Taskpool = Taskpool {
   -- similarly this one is empty if no slots are allocated
   pool_empty :: MVar (),
 
-  -- Mutex controlling access to the taskpool's internals
-  semaphore :: MVar ()
+  -- when was this Taskpool created?
+  -- this is so the Taskpool can be instrumented to
+  -- announce stuff like "task X finished at time 1234"
+  -- where the 1234 is relative to something in the recent past
+  epoch :: UTCTime
   }
 
 newTaskpool :: Integer -> IO Taskpool
 newTaskpool n = do
   rem  <- newMVar n
   full <- newMVar ()
-  empty <- newMVar ()
-  sem  <- newMVar ()
+  empty <- newEmptyMVar
+  start_time <- getCurrentTime
   return $ Taskpool { n_slots = n,
                       n_remaining = rem,
                       pool_full = full,
                       pool_empty = empty,
-                      semaphore = sem }
+                      epoch = start_time
+                    }
 
+time :: Taskpool -> IO NominalDiffTime
+time tp = do
+  now <- getCurrentTime
+  return $ diffUTCTime now (epoch tp)
 
 slots :: Taskpool -> IO (Integer, Integer)
 slots tp = readMVar (n_remaining tp) >>= \n_rem -> return (n_slots tp, n_rem)
@@ -58,13 +67,16 @@ force_clear_flag flag tp = tryPutMVar  (flag tp) () >> return ()
 force_set_flag   :: (Taskpool -> MVar ()) -> Taskpool -> IO ()
 force_set_flag   flag tp = tryTakeMVar (flag tp)    >>  return ()
 
-force_set_flags :: Taskpool -> IO ()
-force_set_flags tp = do
+force_set_state :: Taskpool -> IO ()
+force_set_state tp = do
   (total, remaining) <- slots tp
-  if remaining == 0 then do 
+--  print $ "> pool empty slots: " ++ (show remaining)
+  if remaining == 0 then do
+--    print "> pool is full"
     force_set_flag   pool_full  tp 
     force_clear_flag pool_empty tp
   else if remaining == total then do
+--    print "> pool is empty"
     force_clear_flag pool_full  tp 
     force_set_flag   pool_empty tp
   else do
@@ -79,39 +91,21 @@ wait_until_flag_set flag tp = do
 wait_until_flag_clear flag tp = do
   takeMVar (flag tp)
   
--- perform some action on a Taskpool,
--- acquiring the Taskpool's mutex first,
--- and releasing it afterward
-withTP :: Taskpool -> IO a -> IO a
-withTP tp action = do
-  takeMVar (semaphore tp)
-  z <- action
-  putMVar (semaphore tp) ()
-  return z
-
 -- release a task slot back into the pool
 release :: Taskpool -> IO ()
-release tp = withTP tp $ do
-  print "+1+"
+release tp = do
   free_slots <- takeMVar (n_remaining tp)
-  print "+2+"
   putMVar (n_remaining tp) (free_slots + 1)
-  print "+3+"
-  force_set_flags tp
+  force_set_state tp
   
 acquire :: Taskpool -> IO ()
-acquire tp = withTP tp $ do
-  print "-1-"
+acquire tp = do
   -- this can't complete until n_remaining is positive
   takeMVar (pool_full tp)
   
-  print "-2-"
   free_slots <- takeMVar (n_remaining tp)
-  print "-3-"
   putMVar (n_remaining tp) (free_slots - 1)
-  print "-4-"
-  force_set_flags tp
-  print "-5-"
+  force_set_state tp
 
 is_empty :: Taskpool -> IO Bool
 is_empty tp = do
@@ -127,17 +121,23 @@ handle (Right _)  = return ()
 start_task :: Taskpool -> IO a -> IO ThreadId
 start_task tp task = do
   acquire tp
-  forkFinally task (\res -> print "***" >> release tp >> handle res)
+  forkFinally task (\res -> release tp >> handle res)
 
 slow_task name decisecs = do
 --  print $ "Starting '" ++ name ++ "'"
   threadDelay (decisecs * 100000)
   print $ "Finished '" ++ name ++ "'"
 
+runtime i = (i*i) `mod` 10
+
 main = do 
   tp <- newTaskpool 2
-  start_task tp (slow_task "a" 5)
-  start_task tp (slow_task "b" 25)
-  start_task tp (slow_task "c" 15)
+  sequence_ $ map (start_task tp) $ map (\i -> slow_task (show i) (runtime i)) [1..]
+  -- start_task tp (slow_task "a" 20)
+  -- start_task tp (slow_task "b" 10)
+  -- start_task tp (slow_task "c" 5)
+  -- start_task tp (slow_task "d" 10)
+  -- start_task tp (slow_task "e" 5)
+  -- start_task tp (slow_task "f" 5)
   wait_for_completion tp
   print "******Exiting."
