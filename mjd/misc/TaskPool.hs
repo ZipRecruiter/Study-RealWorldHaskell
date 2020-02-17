@@ -4,6 +4,7 @@ import Control.Concurrent.MVar
 import Control.Exception.Base (Exception, throw)
 import Control.Monad
 import Data.Maybe (isJust)
+import Data.Time
 
 {-
   Idea: a taskpool has a controlled variable that counts how many more tasks
@@ -31,6 +32,11 @@ data Taskpool = Taskpool {
   -- similarly this one is empty if no slots are allocated
   pool_empty :: MVar (),
 
+  -- when was this Taskpool created?
+  -- this is so the Taskpool can be instrumented to
+  -- announce stuff like "task X finished at time 1234"
+  -- where the 1234 is relative to something in the recent past
+  epoch :: UTCTime
   }
 
 newTaskpool :: Integer -> IO Taskpool
@@ -38,11 +44,18 @@ newTaskpool n = do
   rem  <- newMVar n
   full <- newMVar ()
   empty <- newEmptyMVar
+  start_time <- getCurrentTime
   return $ Taskpool { n_slots = n,
                       n_remaining = rem,
                       pool_full = full,
                       pool_empty = empty,
+                      epoch = start_time
+                    }
 
+time :: Taskpool -> IO NominalDiffTime
+time tp = do
+  now <- getCurrentTime
+  return $ diffUTCTime now (epoch tp)
 
 slots :: Taskpool -> IO (Integer, Integer)
 slots tp = readMVar (n_remaining tp) >>= \n_rem -> return (n_slots tp, n_rem)
