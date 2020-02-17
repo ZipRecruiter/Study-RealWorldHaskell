@@ -97,26 +97,18 @@ _withTP label tp action = do
 -- release a task slot back into the pool
 release :: Taskpool -> IO ()
 release tp = withTP "release" tp $ do
---  print "+1+"
   free_slots <- takeMVar (n_remaining tp)
---  print "+2+"
   putMVar (n_remaining tp) (free_slots + 1)
---  print "+3+"
   force_set_state tp
   
 acquire :: Taskpool -> IO ()
 acquire tp = withTP "acquire" tp $ do
---  print "-1-"
   -- this can't complete until n_remaining is positive
   takeMVar (pool_full tp)
   
---  print "-2-"
   free_slots <- takeMVar (n_remaining tp)
---  print "-3-"
   putMVar (n_remaining tp) (free_slots - 1)
---  print "-4-"
   force_set_state tp
---  print "-5-"
 
 is_empty :: Taskpool -> IO Bool
 is_empty tp = do
@@ -132,7 +124,7 @@ handle (Right _)  = return ()
 start_task :: Taskpool -> IO a -> IO ThreadId
 start_task tp task = do
   acquire tp
-  forkFinally task (\res -> print "***" >> release tp >> handle res)
+  forkFinally task (\res -> release tp >> handle res)
 
 slow_task name decisecs = do
 --  print $ "Starting '" ++ name ++ "'"
