@@ -39,7 +39,7 @@ newTaskpool :: Integer -> IO Taskpool
 newTaskpool n = do
   rem  <- newMVar n
   full <- newMVar ()
-  empty <- newMVar ()
+  empty <- newEmptyMVar
   sem  <- newMVar ()
   return $ Taskpool { n_slots = n,
                       n_remaining = rem,
@@ -58,13 +58,16 @@ force_clear_flag flag tp = tryPutMVar  (flag tp) () >> return ()
 force_set_flag   :: (Taskpool -> MVar ()) -> Taskpool -> IO ()
 force_set_flag   flag tp = tryTakeMVar (flag tp)    >>  return ()
 
-force_set_flags :: Taskpool -> IO ()
-force_set_flags tp = do
+force_set_state :: Taskpool -> IO ()
+force_set_state tp = do
   (total, remaining) <- slots tp
-  if remaining == 0 then do 
+--  print $ "> pool empty slots: " ++ (show remaining)
+  if remaining == 0 then do
+--    print "> pool is full"
     force_set_flag   pool_full  tp 
     force_clear_flag pool_empty tp
   else if remaining == total then do
+--    print "> pool is empty"
     force_clear_flag pool_full  tp 
     force_set_flag   pool_empty tp
   else do
@@ -82,8 +85,10 @@ wait_until_flag_clear flag tp = do
 -- perform some action on a Taskpool,
 -- acquiring the Taskpool's mutex first,
 -- and releasing it afterward
-withTP :: Taskpool -> IO a -> IO a
-withTP tp action = do
+withTP :: String -> Taskpool -> IO a -> IO a
+withTP label tp action = action
+
+_withTP label tp action = do
   takeMVar (semaphore tp)
   z <- action
   putMVar (semaphore tp) ()
@@ -91,27 +96,27 @@ withTP tp action = do
 
 -- release a task slot back into the pool
 release :: Taskpool -> IO ()
-release tp = withTP tp $ do
-  print "+1+"
+release tp = withTP "release" tp $ do
+--  print "+1+"
   free_slots <- takeMVar (n_remaining tp)
-  print "+2+"
+--  print "+2+"
   putMVar (n_remaining tp) (free_slots + 1)
-  print "+3+"
-  force_set_flags tp
+--  print "+3+"
+  force_set_state tp
   
 acquire :: Taskpool -> IO ()
-acquire tp = withTP tp $ do
-  print "-1-"
+acquire tp = withTP "acquire" tp $ do
+--  print "-1-"
   -- this can't complete until n_remaining is positive
   takeMVar (pool_full tp)
   
-  print "-2-"
+--  print "-2-"
   free_slots <- takeMVar (n_remaining tp)
-  print "-3-"
+--  print "-3-"
   putMVar (n_remaining tp) (free_slots - 1)
-  print "-4-"
-  force_set_flags tp
-  print "-5-"
+--  print "-4-"
+  force_set_state tp
+--  print "-5-"
 
 is_empty :: Taskpool -> IO Bool
 is_empty tp = do
